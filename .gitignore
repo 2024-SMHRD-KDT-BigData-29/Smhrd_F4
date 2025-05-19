@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Python 가상환경
+.venv/
+
+# PyCharm 설정
+.idea/
+
+# React 관련 (frontend 내부)
+frontend/node_modules/
+frontend/.env

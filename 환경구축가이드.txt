@@ -1,0 +1,41 @@
+### 환경 구축 가이드
+
+코드와 설정 파일만 GitHub에 공유하고,
+( 소스코드 : .py, .js, .jsx, .html 등 )
+( 설정파일 : requirements.txt, package.json, gitignore, README.md 등 )
+
+패키지(venv, node_modules)는 각자 로컬에서 설치해서 쓰는 구조로
+
+밑에는 현재 필요한 패키지 설치 가이드라인 입니다.
+필요 목록 : Nodejs, react, fastapi, mysql, redis
+
+=====================================================================
+
+# Node.js 설치 ( React 웹서버 )
+1. 아래링크를 들어가 Node.js를 설치한다.(LTS)
+    https://nodejs.org/en/
+2. Next 쭉쭉 누르다가 Automatically install necessary tools ~~ 체크
+    필수툴 설치에 체크하고 Next를 누르고 Install 한다.
+3. 설치가 완료된 후 pycharm 터미널창에서 node -v 버전확인으로 설치가 잘 되었는지
+    확인한다.
+
+# react 설치
+1.pycharm 터미널창에서 ( 단축키 Alt + F12 혹은 좌하단 터미널 아이콘 클릭)
+2.pycharm의 터미널에서 아래 명령어 실행:
+    npx create-react-app frontend
+3. 설치 완료후 frontend 폴더안에 node_modules, public, src 등
+    기본 폴더가 자동 생성되는지 확인한다.
+
+# FastAPI 설치
+1. 터미널창에서 python -m venv .venv 타이핑
+2. 터미널창에서 source .venv\Scripts\activate 타이핑
+3. 터미널창에서 pip install fastapi uvicorn ( FastAPI + 서버 ) 설치
+
+# DB관련 설치 ( MySQL, Redis )
+pip install sqlalchemy pymysql
+pip install redis
+
+=====================================================================
+
++ requirements.txt는
+프로젝트 내에 설치된 패키지 버전목록임 ( 필요 패키지 목록과 버전을 확인가능 )
