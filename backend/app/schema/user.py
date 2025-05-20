@@ -16,20 +16,20 @@
 # 밑에는 예시코드임
 # =================================================
 
-from pydantic import BaseModel
-
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-
-    class Config:
-        orm_mode = True  # SQLAlchemy 모델도 처리 가능하게 함
+# from pydantic import BaseModel
+#
+# class UserCreate(BaseModel):
+#     username: str
+#     email: str
+#     password: str
+#
+# class UserResponse(BaseModel):
+#     id: int
+#     username: str
+#     email: str
+#
+#     class Config:
+#         orm_mode = True  # SQLAlchemy 모델도 처리 가능하게 함
 
 
 
