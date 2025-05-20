@@ -4,24 +4,28 @@
     --sidebar-text: #a7b5c7;
     --sidebar-active-bg: #1a3a5e;
     --sidebar-active-text: #ffffff;
-    --main-bg: #f0f2f5;
+    --main-bg: #f5f7fa; /* 두 번째 이미지의 더 밝은 배경색 */
     --card-bg: #ffffff;
-    --text-primary: #333333;
-    --text-secondary: #555555;
-    --text-light: #777777;
-    --border-color: #e0e0e0;
-    --accent-blue: #007bff;
-    --accent-blue-dark: #0056b3;
+    --text-primary: #34495e; /* 더 진하고 명확한 기본 텍스트 색상 */
+    --text-secondary: #7f8c8d; /* 부드러운 보조 텍스트 색상 */
+    --text-light: #bdc3c7; /* 더 밝은 텍스트 색상 */
+    --border-color: #ecf0f1; /* 더 연한 보더 색상 */
+    --accent-blue: #3498db; /* 조금 더 선명한 파란색 */
+    --accent-blue-dark: #2980b9; /* 액센트 블루의 어두운 버전 */
     --font-family: 'Noto Sans KR', 'Roboto', sans-serif;
-    --aqi-good: #60BD68;
-    --aqi-moderate: #FAA43A;
-    --aqi-unhealthy-sensitive: #F17CB0;
+    --aqi-good: #2ecc71; /* 기존보다 좀 더 선명한 녹색 */
+    --aqi-moderate: #f1c40f; /* 기존보다 좀 더 노란색 */
+    --aqi-unhealthy-sensitive: #e67e22; /* 주황색 계열 */
     --aqi-unhealthy: #e74c3c;
-    --aqi-very-unhealthy: #B276B2;
-    --color-pm25: #5DA5DA;
-    --color-pm1: #FAA43A;
-    --color-temp: #E74C3C;
-    --color-humidity: #2ECC71;
+    --aqi-very-unhealthy: #9b59b6; /* 보라색 계열 */
+
+    /* 차트 색상 (두 번째 이미지와 유사하게 조정) */
+    --color-pm25: #3498db; /* PM2.5 - 더 선명한 파란색 */
+    --color-pm1: #e67e22; /* PM1.0 - 주황색 */
+    --color-temp: #e74c3c; /* 온도 - 빨간색 */
+    --color-humidity: #27ae60; /* 습도 - 녹색 */
+
+    --card-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 더 부드럽고 넓은 그림자 */
 }
 
 body, html {
@@ -33,31 +37,24 @@ body, html {
     color: var(--text-primary);
     font-size: 14px;
     height: 100%;
-    /* body에서 overflow: hidden; 은 전체 스크롤을 막으므로,
-       app-container 또는 main-content에서 스크롤을 관리하는 것이 좋습니다.
-       여기서는 일단 유지하되, 필요시 조정합니다. */
     overflow: hidden;
 }
 
-
 /* "시간별 미세먼지 변화" 차트 캔버스에만 적용될 더 작은 최대 높이 */
 /* DashboardPage.js에서 <div className="air-quality-trend-card">로 감싸져 있으므로 이를 활용 */
+/* 이 부분은 하단 차트들의 높이를 비슷하게 맞추기 위해 중요합니다.
+   chart-body canvas의 height: 100% !important; 와 함께 작동하여 부모 높이를 채우도록 합니다.
+   아래 max-height는 불필요할 수 있으나, 혹시 차트가 너무 커지는 경우를 대비한 보험입니다. */
 .air-quality-trend-card .chart-body canvas {
-    max-height: 150px; /* ⭐ 예시 값입니다. 이 값을 조절하여 "일별 환경 지표 요약" 카드와 전체 높이가 비슷해지도록 맞추세요. */
-                       /* "일별 환경 지표 요약" 차트가 현재 차지하는 높이를 개발자 도구로 확인 후,
-                          그 값 또는 그보다 약간 작은 값으로 설정해볼 수 있습니다. */
+    /* max-height: 250px; */ /* ⭐ 예시 값입니다. 필요에 따라 조절하세요. */
 }
 
 
 
 /* --- App.js의 최상위 레이아웃 컨테이너 --- */
-/* App.js에서 <div className="app-container"> 사용 중 */
-/* 이 부분에 flex 레이아웃을 적용하여 Sidebar와 main-content를 좌우로 배치합니다. */
 .app-container {
-    display: flex; /* ⭐ 핵심: 자식 요소(Sidebar, main.main-content)를 가로로 배치 */
-    min-height: 100vh; /* 최소 높이를 화면 전체로 설정 */
-    /* background-color: var(--main-bg); /* body와 동일하다면 생략 가능 */
-    /* overflow: hidden; /* 자식 요소에서 스크롤을 관리하므로 여기서 hidden은 불필요할 수 있음 */
+    display: flex;
+    min-height: 100vh;
 }
 
 /* 유틸리티 클래스 */
@@ -65,17 +62,20 @@ body, html {
     display: none !important;
 }
 
-/* 인증 페이지 스타일 (기존과 동일) */
+/* 인증 페이지 스타일 (기존과 동일, 필요한 경우 색상 변수 적용 확인) */
 .auth-container {
     display: none; flex-direction: column; align-items: center; justify-content: center;
     width: 100vw; height: 100vh; background-color: var(--main-bg);
     position: fixed; top: 0; left: 0; z-index: 2000;
 }
 .auth-container.active { display: flex; }
-.auth-box { background-color: var(--card-bg); padding: 40px 50px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+.auth-box { background-color: var(--card-bg); padding: 40px 50px; border-radius: 10px; box-shadow: var(--card-shadow); text-align: center; width: 100%; max-width: 400px; }
 .auth-logo { font-size: 3em; font-weight: 700; color: var(--accent-blue); margin-bottom: 10px; }
 .auth-subtext { font-size: 1em; color: var(--text-secondary); margin-bottom: 30px; }
-.auth-form input[type="password"] {
+.auth-form input[type="password"],
+.auth-form input[type="text"],
+.auth-form input[type="tel"],
+.auth-form input[type="email"] {
     width: calc(100% - 22px);
     padding: 12px 10px;
     margin-bottom: 20px;
@@ -85,99 +85,58 @@ body, html {
     text-align: left;
     font-family: var(--font-family);
     box-sizing: border-box;
-}
-.auth-form input[type="text"] {    /* ⭐ 아이디(text) 입력 필드에도 동일 스타일 적용 */
-  width: calc(100% - 22px); /* 너비 100%에서 양쪽 padding/border 고려한 값 (22px는 예시) */
-  padding: 12px 10px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  font-size: 1em;
-  text-align: left; /* 아이디, 비밀번호는 왼쪽 정렬이 일반적입니다. 인증키는 중앙 정렬이었을 수 있음. */
-  font-family: var(--font-family);
-  box-sizing: border-box; /* ⭐ padding과 border가 너비에 포함되도록 설정 */
-}
-.auth-form input[type="tel"],  /* ⭐ type="tel" 추가 */
-.auth-form input[type="email"] /* ⭐ 혹시 이메일 필드가 있다면 추가 */ {
-  width: calc(100% - 22px); /* box-sizing: border-box와 함께 사용 */
-  padding: 12px 10px;
-  margin-bottom: 20px; /* 다른 필드들과 간격 통일 */
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  font-size: 1em;
-  text-align: left;
-  font-family: var(--font-family);
-  box-sizing: border-box; /* ⭐ 중요: padding과 border가 너비에 포함되도록 */
-  color: var(--text-primary); /* 입력된 텍스트 색상 */
+    color: var(--text-primary);
 }
 
 /* input type="date" 스타일링 */
-.auth-form .date-input-wrapper { /* 날짜 입력 필드를 감싸는 div에 대한 스타일 */
+.auth-form .date-input-wrapper {
   width: calc(100% - 22px);
-  margin-bottom: 15px; /* 다른 필드들과 간격 통일 */
+  margin-bottom: 15px;
   box-sizing: border-box;
 }
 
 .auth-form input[type="date"] {
-  width: calc(100% - 22px); /* ⭐ 너비를 100%로 설정 */
-  padding: 11px 10px; /* ⭐ 다른 input과 padding을 유사하게 맞춤 (border 두께 고려하여 1px 작게) */
+  width: calc(100% - 22px);
+  padding: 11px 10px;
   border: 1px solid var(--border-color);
   border-radius: 5px;
   font-size: 1em;
   font-family: var(--font-family);
-  box-sizing: border-box; /* ⭐ 중요 */
-  color: var(--text-primary); /* 선택된 날짜의 색상 */
-  appearance: none; /* 브라우저 기본 스타일 최대한 제거 (선택 사항) */
+  box-sizing: border-box;
+  color: var(--text-primary);
+  appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  text-align: left; /* 내부 텍스트 왼쪽 정렬 */
+  text-align: left;
 }
 
-/* 값이 없을 때 placeholder처럼 보이게 하는 CSS (SignUpPage.js의 data-placeholder와 className 활용) */
 .auth-form input[type="date"].date-placeholder-active::before {
   content: attr(data-placeholder);
-  color: #757575; /* placeholder 색상 */
+  color: #757575;
   width: 100%;
 }
-/* Firefox에서 date input의 기본 텍스트 색상 조정 (선택 사항) */
 .auth-form input[type="date"].date-placeholder-active {
-  color: #757575; /* 값이 없을 때 텍스트 색상을 placeholder 색상으로 */
+  color: #757575;
 }
 .auth-form input[type="date"].date-placeholder-active:focus,
-.auth-form input[type="date"]:valid { /* 값이 있거나 포커스되면 원래 텍스트 색상으로 */
+.auth-form input[type="date"]:valid {
   color: var(--text-primary);
 }
 .auth-form input[type="date"].date-placeholder-active:focus::before,
 .auth-form input[type="date"]:valid::before {
-  display: none; /* 값이 있거나 포커스되면 ::before 가상 요소 숨김 */
+  display: none;
 }
 
 
-.signup-form input { /* 회원가입 폼의 모든 input 간격 동일하게 */
-  margin-bottom: 15px;
+.signup-form input {
+  margin-bottom: 15px; /* 약간 여유롭게 조정 */
 }
 .auth-form button { width: 100%; padding: 12px; background-color: var(--accent-blue); color: white; border: none; border-radius: 5px; font-size: 1.1em; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
 .auth-form button:hover { background-color: var(--accent-blue-dark); }
-.auth-message { margin-top: 15px; font-size: 0.9em; color: #e74c3c; height: 20px; }
-
-/* 메인 대시보드 컨테이너 - 이 클래스는 App.js의 최상위 div가 app-container를 사용하므로,
-   만약 App.js에서 dashboard-container를 사용한다면 이 스타일이 적용되겠지만,
-   현재 App.js 코드 기준으로는 .app-container 스타일이 주 레이아웃을 담당합니다. */
-.dashboard-container { display: none; height: 100vh; overflow: hidden; }
-.dashboard-container.active { display: flex; } /* .app-container에 이미 display:flex가 있으므로 이 부분의 역할이 중복될 수 있음 */
-
-/* 페이지 콘텐츠 공통 스타일 (App.js의 main-content 내부의 페이지 컴포넌트 최상위 div에 적용 가능) */
-.page-content { /* 이 클래스명을 DashboardPage.js 등의 최상위 div에 사용한다면 적용 */
-    display: flex; /* 기본값은 none. active는 JS로 제어하던 방식의 잔재로 보임. */
-    flex-direction: column;
-    flex-grow: 1;
-    height: 100%;
-    overflow: hidden;
-}
-.page-content.active { display: flex; }
+.auth-message { margin-top: 15px; font-size: 0.9em; color: var(--aqi-unhealthy); height: 20px; }
 
 
-/* 사이드바 (기존 스타일 대부분 유지, .app-container의 자식으로 배치됨) */
+/* 사이드바 (기존 스타일 대부분 유지) */
 .sidebar {
     width: 260px;
     background-color: var(--sidebar-bg);
@@ -185,8 +144,7 @@ body, html {
     display: flex;
     flex-direction: column;
     padding: 20px 0;
-    /* height: 100%; /* 부모인 .app-container가 min-height: 100vh이므로, 자동으로 늘어남 */
-    flex-shrink: 0; /* ⭐ 중요: 사이드바 너비 고정 */
+    flex-shrink: 0;
 }
 .sidebar-header { padding: 0 25px 20px 25px; display: flex; align-items: center; border-bottom: 1px solid #2e4359; }
 .sidebar-header .logo-icon { font-size: 1.8em; margin-right: 10px; color: var(--sidebar-active-text); }
@@ -196,9 +154,7 @@ body, html {
 .sidebar-nav li a { display: flex; align-items: center; padding: 12px 25px; color: var(--sidebar-text); text-decoration: none; font-size: 0.95em; font-weight: 400; transition: background-color 0.2s, color 0.2s; border-left: 3px solid transparent; }
 .sidebar-nav li a i { margin-right: 15px; width: 20px; text-align: center; font-size: 1.1em; }
 .sidebar-nav li:hover a { background-color: var(--sidebar-active-bg); color: var(--sidebar-active-text); }
-/* NavLink의 active 클래스 이름이 'active' 이므로, li.active a 대신 li a.active 또는 li > .active 로 선택자 변경 고려 */
-/* Sidebar.js에서 NavLink에 className={({ isActive }) => isActive ? 'active' : ''} 를 사용하므로, a.active 스타일이 필요 */
-.sidebar-nav li a.active { /* 'li.active a' 에서 'li a.active' 로 변경 또는 NavLink가 만드는 구조 확인 */
+.sidebar-nav li a.active {
     background-color: var(--sidebar-active-bg);
     color: var(--sidebar-active-text);
     font-weight: 500;
@@ -227,34 +183,46 @@ body, html {
 
 
 /* 메인 콘텐츠 영역 */
-/* App.js에서 <main className="main-content">를 사용하므로, .main-content-wrapper를 .main-content로 변경하거나,
-   .main-content에 아래 스타일을 적용합니다. */
 .main-content {
-    flex-grow: 1; /* ⭐ 중요: 사이드바를 제외한 나머지 공간을 모두 차지 */
-    padding: 0; /* 내부 페이지에서 패딩을 관리하도록 함 */
-    display: flex; /* 자식 요소(페이지 컴포넌트)를 flex 아이템으로 만듬 */
-    flex-direction: column; /* 페이지 컴포넌트가 수직으로 확장되도록 함 */
-    /* height: 100%; /* 부모인 .app-container가 min-height: 100vh 이므로 자동으로 늘어남 */
-    overflow: hidden; /* 페이지 내부에서 스크롤을 관리 (예: .page-actual-content) */
+    flex-grow: 1;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* main-content 내부에 페이지 컴포넌트가 렌더링될 때, 그 페이지 컴포넌트의 헤더 */
-.main-header { /* DashboardPage.js 등의 페이지 내부 헤더 */
+.main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 30px;
+    padding: 20px 30px; /* 패딩 증가 */
     background-color: var(--card-bg);
     border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0; /* 높이가 늘어나지 않도록 고정 */
+    flex-shrink: 0;
 }
-.main-header .header-title-section h2 { font-size: 1.8em; font-weight: 500; color: var(--text-primary); margin: 0; }
-.header-actions { display: flex; align-items: center; gap: 15px; }
-.header-actions .action-btn { padding: 8px 15px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--accent-blue); border-radius: 5px; cursor: pointer; font-size: 0.9em; font-weight: 500; transition: background-color 0.2s, color 0.2s; }
+.main-header .header-title-section h2 {
+    font-size: 1.6em; /* 글꼴 크기 약간 축소 */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+.header-actions { display: flex; align-items: center; gap: 20px; /* 간격 증가 */ }
+.header-actions .action-btn {
+    padding: 8px 18px; /* 패딩 증가 */
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--accent-blue);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s; /* border-color도 트랜지션에 추가 */
+}
 .header-actions .action-btn i { margin-right: 5px; }
-.header-actions .action-btn:hover { border-color: var(--accent-blue); }
+.header-actions .action-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue-dark); }
 .header-actions .action-btn.primary-btn { background-color: var(--accent-blue); color: white; border-color: var(--accent-blue); }
-.header-actions .action-btn.primary-btn:hover { background-color: var(--accent-blue-dark); }
+.header-actions .action-btn.primary-btn:hover { background-color: var(--accent-blue-dark); border-color: var(--accent-blue-dark); }
 .dev-mode { display: flex; align-items: center; font-size: 0.9em; }
 .dev-mode span { margin-right: 8px; color: var(--text-secondary); }
 .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
@@ -267,55 +235,108 @@ input:checked + .slider:before { transform: translateX(14px); }
 .slider.round:before { border-radius: 50%; }
 
 /* 콘텐츠 스크롤 영역 (페이지 컴포넌트 내부에서 실제 스크롤되는 부분) */
-/* DashboardPage.js 에서 <main className="page-actual-content"> 에 해당 */
-.content-area, /* 기존 클래스명 유지 또는 page-actual-content로 통일 */
-.page-actual-content { /* DashboardPage.js 에서 사용된 클래스명 */
-    padding: 25px 30px;
-    flex-grow: 1; /* .main-header를 제외한 나머지 공간 차지 */
-    overflow-y: auto; /* 이 영역에서 스크롤 발생 */
+.page-actual-content {
+    padding: 30px; /* 패딩 증가 */
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex; /* 내부 컨텐츠를 flex로 배치하기 위해 추가 */
+    flex-direction: column; /* 세로 방향으로 정렬 */
+    gap: 25px; /* 그리드와 하단 차트 섹션 간 간격 */
 }
 
 
-/* --- 나머지 스타일 (대시보드 그리드, 카드, 모달 등)은 기존과 동일하게 유지 --- */
+/* --- 나머지 스타일 (대시보드 그리드, 카드, 모달 등) --- */
 /* 대시보드 그리드 */
-.dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* 유연한 그리드 컬럼 */
+    gap: 25px; /* 간격 증가 */
+}
 /* 카드 스타일 (공통) */
-.card { background-color: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 20px; display: flex; flex-direction: column; }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
-.card-header h3 { font-size: 1.05em; font-weight: 500; color: var(--text-primary); margin: 0; display: flex; align-items: center; }
-.card-icon-title { margin-right: 8px; color: var(--text-light); font-size: 1.1em; }
-.card-filter, .card-menu { font-size: 0.85em; color: var(--text-light); cursor: pointer; }
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px; /* 둥근 모서리 증가 */
+    box-shadow: var(--card-shadow); /* 전역 변수 사용 */
+    padding: 25px; /* 패딩 증가 */
+    display: flex;
+    flex-direction: column;
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.card-header h3 {
+    font-size: 1.1em; /* 약간 증가 */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+.card-icon-title { margin-right: 10px; color: var(--text-secondary); font-size: 1.2em; /* 아이콘 크기 증가 */ }
+.card-filter, .card-menu { font-size: 0.9em; color: var(--text-secondary); cursor: pointer; }
 .card-filter i, .card-menu i { margin-left: 5px; }
-.card-body { flex-grow: 1; }
-.card-body .data-value { font-size: 1.8em; font-weight: 500; color: var(--text-primary); margin: 0 0 5px 0; }
-.card-body .unit { font-size: 0.7em; color: var(--text-light); margin-left: 5px; }
-.card-body .data-subtitle { font-size: 0.85em; color: var(--text-secondary); margin: 0; }
-.metric-card .card-body { display: flex; flex-direction: column; }
+.card-body { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; /* 내용 중앙 정렬 */ }
+.card-body .data-value { font-size: 2em; /* 값 크기 증가 */ font-weight: 600; /* 폰트 굵기 증가 */ color: var(--text-primary); margin: 0 0 5px 0; }
+.card-body .unit { font-size: 0.8em; color: var(--text-light); margin-left: 5px; }
+.card-body .data-subtitle { font-size: 0.9em; color: var(--text-secondary); margin: 0; }
+.metric-card .card-body { display: flex; flex-direction: column; justify-content: space-between; } /* 미니 차트가 아래로 정렬되도록 */
 .metric-card .mini-chart-container { width: 100%; height: 50px; margin-top: auto; padding-top: 10px; }
 .metric-card .mini-chart-container canvas { max-height: 100%; max-width: 100%; }
-.current-aqi-card { grid-column: span 2; grid-row: span 2; align-items: center; position: relative; }
-.current-aqi-card .card-body { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; position: relative;}
-.current-aqi-card canvas { max-width: 220px; max-height: 220px; }
-.aqi-value-text { position: absolute; text-align: center; }
-.aqi-value-text #aqiValueDisplay { display: block; font-size: 2.2em; font-weight: 700; color: var(--text-primary); }
-.aqi-value-text #aqiStatusDisplay { display: block; font-size: 1.1em; font-weight: 500; margin-top: 5px; }
-.air-quality-trend-card, .daily-air-quality-summary-card { grid-column: span 4; }
-.chart-body { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
-.chart-body canvas { max-height: 300px; width: 100% !important; }
-.air-quality-trend-card .chart-body canvas {
-    max-height: 50px; /* ⭐ 예시 값입니다. 이 값을 조절하여 "일별 환경 지표 요약" 카드와 전체 높이가 비슷해지도록 맞추세요. */
-                       /* "일별 환경 지표 요약" 차트가 현재 차지하는 높이를 개발자 도구로 확인 후,
-                          그 값 또는 그보다 약간 작은 값으로 설정해볼 수 있습니다. */
+
+/* AQI 도넛 차트 카드 */
+.current-aqi-card {
+    grid-column: span 2; /* 2칸 차지 */
+    grid-row: span 2; /* 2줄 차지 */
+    display: flex; /* flexbox 사용 */
+    flex-direction: column; /* 세로 정렬 */
+    align-items: center;
+    justify-content: center; /* 전체 카드 내용을 중앙 정렬 */
+    position: relative;
+    padding: 25px; /* 카드 패딩 유지 */
 }
+.current-aqi-card .card-body {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    /* max-height: 250px; */ /* AQI 차트의 최대 높이 제한 */
+}
+.current-aqi-card canvas {
+    max-width: 250px; /* 도넛 차트 크기 증가 */
+    max-height: 250px; /* 도넛 차트 크기 증가 */
+    /* width: 100% !important; */ /* 부모에 따라 유연하게 크기 조절 */
+    /* height: 100% !important; */
+}
+.aqi-value-text { position: absolute; text-align: center; }
+.aqi-value-text #aqiValueDisplay { display: block; font-size: 2.8em; font-weight: 700; color: var(--text-primary); } /* AQI 값 크기 증가 */
+.aqi-value-text #aqiStatusDisplay { display: block; font-size: 1.2em; font-weight: 500; margin-top: 8px; } /* 상태 텍스트 크기 증가 */
+
+/* 하단 차트 카드 (시간별 미세먼지, 일별 환경 지표) */
+.air-quality-trend-card, .daily-air-quality-summary-card {
+    grid-column: span 4; /* 두 번째 스크린샷은 4칸이 아닌 2칸을 차지하는 것처럼 보입니다. 아래 .bottom-charts-row에서 재정의합니다. */
+}
+.chart-body { flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+.chart-body canvas {
+    width: 100% !important;
+    height: 100% !important; /* ⭐ 중요: 부모(.chart-body)의 높이를 따르도록 */
+}
+
 .anomaly-history-card { grid-column: span 4; min-height: 250px; }
 .scrollable-list { max-height: 200px; overflow-y: auto; padding-right: 10px; }
 .scrollable-list ul { list-style: none; padding: 0; margin: 0; }
-.scrollable-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9em; }
+.scrollable-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9em; }
 .scrollable-list li:last-child { border-bottom: none; }
 #anomalyList .timestamp { font-size: 0.85em; color: var(--text-light); min-width: 110px; }
 #anomalyList .description { flex-grow: 1; margin: 0 10px; color: var(--text-secondary); }
 #anomalyList .action-taken { font-weight: 500; color: var(--accent-blue); white-space: nowrap; }
-.device-list-container { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow-x: auto; }
+.device-list-container { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: var(--card-shadow); overflow-x: auto; }
 .device-list-container table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 0.9em; }
 .device-list-container th,
 .device-list-container td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
@@ -325,11 +346,11 @@ input:checked + .slider:before { transform: translateX(14px); }
 .device-list-container td .device-status.online { background-color: var(--aqi-good); color: white; }
 .device-list-container td .device-status.offline { background-color: #e0e0e0; color: var(--text-secondary); }
 .action-btn.mini-btn { padding: 5px 10px; font-size: 0.8em; }
-.action-btn.delete-btn { background-color: #e74c3c; color: white; border-color: #e74c3c; }
+.action-btn.delete-btn { background-color: var(--color-temp); color: white; border-color: var(--color-temp); }
 .action-btn.delete-btn:hover { background-color: #c0392b;}
 .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
 .modal.show { display: flex; }
-.modal-content { background-color: var(--card-bg); margin: auto; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 90%; max-width: 500px; position: relative; display: flex; flex-direction: column; }
+.modal-content { background-color: var(--card-bg); margin: auto; padding: 25px; border-radius: 8px; box-shadow: var(--card-shadow); width: 90%; max-width: 500px; position: relative; display: flex; flex-direction: column; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
 .modal-header h3 { margin: 0; font-size: 1.3em; color: var(--text-primary); }
 .close-button { color: var(--text-light); font-size: 1.8em; font-weight: bold; border: none; background: none; cursor: pointer; padding: 0; line-height: 1; }
@@ -341,22 +362,21 @@ input:checked + .slider:before { transform: translateX(14px); }
 .modal-footer { padding-top: 20px; border-top: 1px solid var(--border-color); text-align: right; margin-top: 20px; }
 .modal-footer .action-btn { margin-left: 10px; }
 .signup-form input {
-  margin-bottom: 12px; /* 회원가입 폼 입력 필드 간 간격 */
+  margin-bottom: 12px;
 }
 
 .signup-form input[type="date"] {
-  /* 날짜 입력 필드 커서 및 텍스트 정렬 기본값 사용 */
   text-align: left;
-  padding-right: 10px; /* 필요시 오른쪽 패딩 */
+  padding-right: 10px;
 }
 
-/* 날짜 입력 필드 플레이스홀더 스타일링 (제한적 지원) */
 .signup-form input[type="date"]:invalid {
-  color: #757575; /* 값이 없을 때 placeholder 색상처럼 보이게 */
+  color: #757575;
 }
+
 /* 헤더의 알림 영역 스타일 */
 .notification-area {
-  position: relative; /* 알림 패널의 위치 기준점 */
+  position: relative;
   display: flex;
   align-items: center;
 }
@@ -364,11 +384,11 @@ input:checked + .slider:before { transform: translateX(14px); }
 .notification-bell {
   background: none;
   border: none;
-  color: var(--text-secondary); /* 아이콘 색상 */
-  font-size: 1.4em; /* 아이콘 크기 */
+  color: var(--text-secondary);
+  font-size: 1.5em; /* 아이콘 크기 약간 증가 */
   cursor: pointer;
-  padding: 5px; /* 클릭 영역 확보 */
-  position: relative; /* 뱃지 위치 기준점 */
+  padding: 5px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,47 +400,47 @@ input:checked + .slider:before { transform: translateX(14px); }
 
 .notification-badge {
   position: absolute;
-  top: 0px;
-  right: 0px;
-  background-color: var(--aqi-unhealthy); /* 빨간색 알림 뱃지 */
+  top: -5px; /* 위치 조정 */
+  right: -5px; /* 위치 조정 */
+  background-color: var(--aqi-unhealthy);
   color: white;
-  font-size: 0.65em; /* 뱃지 내 숫자 크기 */
+  font-size: 0.65em;
   font-weight: bold;
   border-radius: 50%;
-  width: 16px; /* 뱃지 크기 */
-  height: 16px; /* 뱃지 크기 */
+  width: 18px; /* 뱃지 크기 약간 증가 */
+  height: 18px; /* 뱃지 크기 약간 증가 */
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  border: 1px solid var(--card-bg); /* 뱃지 테두리 */
+  border: 1px solid var(--card-bg);
 }
 
 
 .notification-panel {
   position: absolute;
-  top: calc(100% + 10px); /* 아이콘 바로 아래에 약간의 간격을 두고 표시 */
+  top: calc(100% + 15px); /* 아이콘 아래로 더 내려서 표시 */
   right: 0;
-  width: 320px; /* 알림 패널 너비 */
-  max-height: 400px; /* 알림 패널 최대 높이 */
-  overflow-y: auto; /* 내용이 많으면 스크롤 */
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 1050; /* 다른 요소들 위에 표시 */
+  box-shadow: var(--card-shadow); /* 전역 변수 사용 */
+  z-index: 1050;
   display: flex;
   flex-direction: column;
 }
 
 .notification-panel-header {
-  padding: 12px 15px;
+  padding: 15px; /* 패딩 증가 */
   border-bottom: 1px solid var(--border-color);
 }
 
 .notification-panel-header h4 {
   margin: 0;
-  font-size: 1.1em;
+  font-size: 1.2em; /* 글꼴 크기 약간 증가 */
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -433,42 +453,42 @@ input:checked + .slider:before { transform: translateX(14px); }
 }
 
 .notification-item {
-  padding: 12px 15px;
-  border-bottom: 1px solid #f0f0f0; /* 각 알림 항목 구분선 */
+  padding: 15px; /* 패딩 증가 */
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* 시간과 메시지 사이 간격 */
+  gap: 6px; /* 간격 증가 */
 }
 .notification-item:last-child {
   border-bottom: none;
 }
 
 .notification-item:hover {
-  background-color: #f9f9f9; /* 마우스 오버 시 배경색 */
+  background-color: #fcfcfc; /* 마우스 오버 시 배경색 더 부드럽게 */
 }
 
 .notification-time {
-  font-size: 0.75em;
+  font-size: 0.8em; /* 글꼴 크기 약간 증가 */
   color: var(--text-light);
 }
 
 .notification-message {
-  font-size: 0.9em;
+  font-size: 0.95em; /* 글꼴 크기 약간 증가 */
   color: var(--text-secondary);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5; /* 줄 간격 증가 */
 }
 
-/* 알림 타입별 스타일 (선택 사항) */
+/* 알림 타입별 스타일 */
 .notification-item.type-error .notification-message {
-  color: var(--aqi-unhealthy); /* 에러 메시지 색상 */
+  color: var(--aqi-unhealthy);
   font-weight: 500;
 }
 .notification-item.type-warning .notification-message {
-  color: var(--aqi-moderate); /* 경고 메시지 색상 */
+  color: var(--aqi-unhealthy-sensitive); /* 경고색을 주황색 계열로 통일 */
 }
 .notification-item.type-success .notification-message {
-  color: var(--aqi-good); /* 성공 메시지 색상 */
+  color: var(--aqi-good);
 }
 
 .no-notifications {
@@ -478,41 +498,156 @@ input:checked + .slider:before { transform: translateX(14px); }
   font-size: 0.9em;
 }
 
-/* 헤더 액션 버튼과 알림 아이콘 간 간격 조정이 필요할 수 있음 */
-/* .main-header .header-actions 에 gap 이 이미 설정되어 있음 */
+
+/* ------------------------------------------------ */
+/* ▼▼▼ DashboardPage 하단 차트 레이아웃 수정 ▼▼▼ */
+/* ------------------------------------------------ */
+.bottom-charts-row {
+  display: flex;
+  gap: 25px; /* 카드 사이 간격 증가 */
+  flex-grow: 1;
+  min-height: 0; /* Flex 아이템의 최소 높이 설정 */
+}
+
+.left-large-chart-container,
+.right-column-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-large-chart-container.card,
+.right-column-container.card {
+  height: 100%; /* 부모 컨테이너 높이에 맞춰짐 */
+}
 
 
+/* 차트 본문 및 캔버스 높이 설정 */
+.chart-body {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+.chart-body canvas {
+  width: 100% !important;
+  height: 100% !important; /* ⭐ 중요: 부모(.chart-body)의 높이를 따르도록 */
+}
 
 
+/* ------------------------------------------------ */
+/* ▼▼▼ AnomalyHistoryPage 테이블 스타일 ▼▼▼ */
+/* ------------------------------------------------ */
+.page-anomaly-history .list-container,
+.page-device-management .list-container {
+  background-color: var(--card-bg);
+  padding: 25px; /* 패딩 증가 */
+  border-radius: 12px; /* 둥근 모서리 증가 */
+  box-shadow: var(--card-shadow);
+  margin-top: 25px; /* 간격 증가 */
+}
 
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em; /* 글꼴 크기 약간 증가 */
+}
 
+.data-table th,
+.data-table td {
+  padding: 12px 15px; /* 패딩 증가 */
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
 
+.data-table th {
+  background-color: #f8f9fa;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
 
-/* 반응형 조정 (기존과 동일) */
+.data-table tbody tr:hover {
+  background-color: #fcfcfc; /* 호버 색상 변경 */
+}
+
+/* AnomalyHistoryPage - 안 읽은 이력 강조 */
+.data-table .unread-anomaly td {
+  font-weight: bold;
+}
+
+/* AnomalyHistoryPage - 상태 뱃지 (DeviceManagementPage와 공용 가능) */
+.status-badge {
+  padding: 5px 12px; /* 패딩 증가 */
+  border-radius: 16px; /* 둥근 정도 증가 */
+  font-size: 0.85em; /* 글꼴 크기 약간 증가 */
+  color: white;
+  text-align: center;
+  min-width: 70px;
+  display: inline-block;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status-확인-필요 { background-color: var(--aqi-unhealthy); }
+.status-조치-완료 { background-color: var(--aqi-good); }
+.status-확인-중 { background-color: var(--aqi-moderate); color: #212529 !important; }
+
+/* DeviceManagementPage - 장치 상태 뱃지 */
+.device-status {
+    font-weight: 500; padding: 4px 10px; border-radius: 5px; font-size:0.85em; /* 글꼴 크기 약간 증가 */
+    display: inline-block; text-align: center; min-width: 55px;
+}
+.device-status.online { background-color: var(--aqi-good); color: white; }
+.device-status.offline { background-color: #e0e0e0; color: var(--text-secondary); }
+
+/* 테이블 내 작은 액션 버튼 */
+.action-btn.mini-btn {
+    padding: 6px 12px; /* 패딩 증가 */
+    font-size: 0.9em; /* 글꼴 크기 약간 증가 */
+    margin-right: 8px; /* 간격 증가 */
+}
+
+/* 로딩, 에러, 데이터 없음 메시지 스타일 */
+.loading-message, .error-message, .no-data-message {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 1.1em;
+  color: var(--text-secondary);
+}
+.error-message {
+  color: var(--aqi-unhealthy);
+}
+
+/* 반응형 조정 (기존과 동일, 필요한 경우 미세 조정) */
 @media (max-width: 1200px) {
-    .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
-    .metric-card { grid-column: span 1; }
-    .current-aqi-card, .air-quality-trend-card, .daily-air-quality-summary-card, .anomaly-history-card { grid-column: span 2; }
+    .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } /* 더 작은 화면에서 유연하게 조정 */
+    .current-aqi-card { grid-column: span 2; grid-row: span 1; } /* 2열 레이아웃에서 AQI는 한 줄에 2칸만 차지 */
+    .metric-card { grid-column: span 1; } /* 나머지 카드들은 1칸 */
+    .bottom-charts-row { flex-direction: column; } /* 하단 차트 세로 배치 */
+    .left-large-chart-container, .right-column-container { flex: none; width: 100%; height: auto; } /* 하단 차트 높이 자동 */
+    .air-quality-trend-card .chart-body canvas,
+    .daily-air-quality-summary-card .chart-body canvas {
+        max-height: 280px; /* 세로 배치 시 각 차트의 최대 높이 */
+    }
 }
 @media (max-width: 768px) {
     body { overflow-y: auto; }
-    /* .dashboard-container { min-height: initial; height: auto; } */ /* .app-container로 대체됨 */
-    .app-container { /* 반응형에서는 flex 방향을 column으로 변경 가능 */
-        min-height: initial; height: auto;
-        /* flex-direction: column; /* 모바일에서는 사이드바를 상단으로 보낼 경우 */
-    }
-    .sidebar { display: none; /* 모바일에서는 기본적으로 사이드바 숨김 (햄버거 메뉴 등으로 토글) */ }
-    .main-content { /* 사이드바가 숨겨지므로 main-content가 전체 너비 차지 */
-        margin-left: 0; /* 사이드바 너비만큼의 margin 제거 */
-        width: 100%;
-    }
-    .content-area, .page-actual-content { overflow-y: visible; } /* 모바일에서는 페이지 내부 스크롤보다 body 스크롤 허용 */
-    .main-header { flex-direction: column; align-items: flex-start; gap: 10px;}
+    .app-container { min-height: initial; height: auto; }
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; width: 100%; }
+    .page-actual-content { overflow-y: visible; padding: 20px; gap: 20px; } /* 모바일 패딩, 간격 조정 */
+    .main-header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 15px 20px; } /* 모바일 헤더 패딩 조정 */
     .header-actions { width: 100%; justify-content: flex-start;}
     .dashboard-grid { grid-template-columns: 1fr; }
-    .card, .current-aqi-card, .air-quality-trend-card, .daily-air-quality-summary-card, .anomaly-history-card, .metric-card { grid-column: span 1 !important; }
+    .card, .current-aqi-card, .air-quality-trend-card, .daily-air-quality-summary-card, .anomaly-history-card, .metric-card { grid-column: span 1 !important; grid-row: span 1 !important; } /* 모든 카드를 한 줄에 하나씩 */
     .device-list-container { overflow-x: auto; }
     .device-list-container th,
     .device-list-container td { font-size: 0.85em; padding: 8px 10px; }
     .modal-content { width: 95%; }
+
+    .aqi-value-text #aqiValueDisplay { font-size: 2.5em; } /* 모바일 AQI 값 크기 조정 */
+    .aqi-value-text #aqiStatusDisplay { font-size: 1.1em; } /* 모바일 AQI 상태 텍스트 크기 조정 */
+    .notification-panel { width: 280px; } /* 모바일 알림 패널 너비 조정 */
 }

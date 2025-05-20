@@ -84,5 +84,27 @@ function Sidebar({ userRole, onLogout }) {
     </aside>
   );
 }
+// src/components/dashboard/Sidebar.js
+// ...
+// function Sidebar({ userRole, onLogout, currentUser }) { // currentUser prop 추가
+// ...
+//   return (
+//     <aside className="sidebar">
+//       <div className="sidebar-header">
+//         <NavLink to="/dashboard" className="logo-link">
+//           <span className="logo-icon"><i className="fas fa-industry"></i></span>
+//           <h1>Worklean</h1>
+//         </NavLink>
+//         {/* currentUser가 있고, m_name 필드가 있다면 표시 */}
+//         {currentUser && currentUser.m_name && (
+//           <p style={{ color: 'var(--sidebar-text)', margin: '10px 0 0 0', textAlign: 'center', fontSize: '0.9em' }}>
+//             {currentUser.m_name}님 ({currentUser.role})
+//           </p>
+//         )}
+//       </div>
+// ...
+
+
+
 
 export default Sidebar;
