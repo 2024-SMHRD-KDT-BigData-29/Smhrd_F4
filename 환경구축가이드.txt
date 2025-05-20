@@ -36,7 +36,12 @@
 pip install sqlalchemy pymysql
 pip install redis
 
+
 =====================================================================
 
 + requirements.txt는
 프로젝트 내에 설치된 패키지 버전목록임 ( 필요 패키지 목록과 버전을 확인가능 )
+
++ main.py에서 백엔드 서버 실행오류
+1. 가상환경폴더에 app 삭제
+rd /s /q .venv\Lib\site-packages\app
