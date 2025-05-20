@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from fastapi import APIRouter
 
+router = APIRouter()
 
 # ✅ 회원가입용
 class SignupRequest(BaseModel):

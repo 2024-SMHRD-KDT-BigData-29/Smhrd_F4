@@ -23,6 +23,7 @@ def signup(user: SignupRequest, db: Session) -> SignupResponse:
         charge_line=user.charge_line,
         com_name=user.com_name,
         m_position=user.m_position,
+
         start_date=user.start_date
     )
 
