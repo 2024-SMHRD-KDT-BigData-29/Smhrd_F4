@@ -25,6 +25,7 @@
     npx create-react-app frontend
 3. 설치 완료후 frontend 폴더안에 node_modules, public, src 등
     기본 폴더가 자동 생성되는지 확인한다.
+4. npm install react-router-dom chart.js react-chartjs-2
 
 # FastAPI 설치
 1. 터미널창에서 python -m venv .venv 타이핑
