@@ -5,10 +5,10 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Doughnut, Line, Bar } from 'react-chartjs-2';
 
 // 직접 만든 컴포넌트들 import (Sidebar import 제거)
-import DataCard from '../components/dashboard/DataCard';
-import TimeSeriesChartCard from '../components/dashboard/TimeSeriesChartCard';
-import DailyAverageChartCard from '../components/dashboard/DailyAverageChartCard';
-import AlertHistoryCard from '../components/dashboard/AlertHistoryCard';
+import DataCard from '../../frontend/src/components/dashboard/DataCard';
+import TimeSeriesChartCard from '../../frontend/src/components/dashboard/TimeSeriesChartCard';
+import DailyAverageChartCard from '../../frontend/src/components/dashboard/DailyAverageChartCard';
+import AlertHistoryCard from '../../frontend/src/components/dashboard/AlertHistoryCard';
 
 // Chart.js 모듈 등록 (기존과 동일)
 ChartJS.register(
