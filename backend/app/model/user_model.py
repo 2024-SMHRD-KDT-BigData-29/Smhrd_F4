@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String
 from app.db.database import Base
 
+# ORM (JPA 같은거)
 class User(Base):
     __tablename__ = "tb_manager"
 

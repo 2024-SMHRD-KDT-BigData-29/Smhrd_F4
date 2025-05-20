@@ -1,35 +1,78 @@
-# Pydantic 스키마 정의 (입출력 데이터 구조)
-# Pydantic
-# API 요청/응답의 데이터 구조를 정의하고 검증·직렬화해주는 도구
-
-# 왜 사용/
-# API 문서 자동 생성
-# 데이터 검증 자동 처리 (email에 숫자 오면 에러 같은)
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
-# 사용자의 HTTP 요청이 들어왔을 때 흐름:
-# 1. 사용자 요청 JSON
-# 2. Pydantic => 데이터 검증
-# 3. SQLAlchemy => DB 읽기 / 쓰기
-# 4. 응답 JSON <= 다시 Pydantic이 포맷팅
-
-# 밑에는 예시코드임
-# =================================================
-
-# from pydantic import BaseModel
-#
-# class UserCreate(BaseModel):
-#     username: str
-#     email: str
-#     password: str
-#
-# class UserResponse(BaseModel):
-#     id: int
-#     username: str
-#     email: str
-#
-#     class Config:
-#         orm_mode = True  # SQLAlchemy 모델도 처리 가능하게 함
+# ✅ 회원가입용
+class SignupRequest(BaseModel):
+    m_id: str
+    m_pw: str
+    m_name: str
+    m_tel: str
+    charge_line: str
+    com_name: str
+    m_position: str
+    start_date: str
 
 
+class SignupResponse(BaseModel):
+    status: str
+    message: str
+
+
+# ✅ 로그인용
+class LoginRequest(BaseModel):
+    m_id: str
+    m_pw: str
+
+
+class LoginResponse(BaseModel):
+    status: str
+    user: Optional["UserResponse"]  # 실제 사용자 정보 포함
+
+
+# ✅ 유저 정보 응답용
+class UserResponse(BaseModel):
+    m_id: str
+    m_name: str
+    m_position: str
+    com_name: str
+
+    class Config:
+        orm_mode = True
+
+
+# ✅ DB 생성용 (SQLAlchemy 모델 매핑)
+class UserCreate(BaseModel):
+    m_id: str = Field(..., max_length=20)
+    m_pw: str = Field(..., max_length=20)
+    m_name: str = Field(..., max_length=50)
+    m_tel: str = Field(..., max_length=20)
+    charge_line: str = Field(..., max_length=10)
+    com_name: str = Field(..., max_length=50)
+    m_position: str = Field(..., max_length=20)
+    start_date: str = Field(..., max_length=30)
+
+
+# ✅ 수정용
+class UserUpdate(BaseModel):
+    m_name: Optional[str] = Field(None, max_length=50)
+    m_tel: Optional[str] = Field(None, max_length=20)
+    charge_line: Optional[str] = Field(None, max_length=10)
+    com_name: Optional[str] = Field(None, max_length=50)
+    m_position: Optional[str] = Field(None, max_length=20)
+    start_date: Optional[str] = Field(None, max_length=30)
+
+    class Config:
+        orm_mode = True
+
+# 사용자 조회 응답
+class CurrentUserResponse(BaseModel):
+    user_id: str
+    name: str
+    tel: str
+    charge_line: str
+    position: str
+    company: str
+    start_date: str
+    role: str
 

@@ -1,59 +1,66 @@
-# app/api/auth.py
-
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# => backend 경로를 PYTHONPATH에 추가
-
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
-from app.schema.auth_schema import LoginRequest, LoginResponse, SignupRequest, SignupResponse, UserResponse
-from app.db.database import get_db
-from app.model.user_model import User
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
+# ✅ 회원가입용
+class SignupRequest(BaseModel):
+    m_id: str
+    m_pw: str
+    m_name: str
+    m_tel: str
+    charge_line: str
+    com_name: str
+    m_position: str
+    start_date: str
 
-router = APIRouter()
 
-@router.post("/login", response_model=LoginResponse)
-def login_user(request: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.m_id == request.m_id).first()
-    if not user or user.m_pw != request.m_pw:
-        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
+class SignupResponse(BaseModel):
+    status: str
+    message: str
 
-    return LoginResponse(
-        status="ok",
-        user={
-            "m_id": user.m_id,
-            "m_name": user.m_name,
-            "m_position": user.m_position,
-            "com_name": user.com_name
-        }
-    )
 
-@router.post("/signup", response_model=SignupResponse)
-def signup_user(request: SignupRequest, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.m_id == request.m_id).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="이미 존재하는 ID입니다.")
+# ✅ 로그인용
+class LoginRequest(BaseModel):
+    m_id: str
+    m_pw: str
 
-    new_user = User(**request.dict())
-    db.add(new_user)
-    db.commit()
 
-    return SignupResponse(status="ok", message="회원가입이 완료되었습니다.")
+class LoginResponse(BaseModel):
+    status: str
+    user: Optional["UserResponse"]  # 실제 사용자 정보 포함
 
-@router.get("/me", response_model=UserResponse)
-def get_my_info(m_id: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.m_id == m_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
-    return UserResponse(
-        m_id=user.m_id,
-        m_name=user.m_name,
-        m_position=user.m_position,
-        com_name=user.com_name
-    )
+# ✅ 유저 정보 응답용
+class UserResponse(BaseModel):
+    m_id: str
+    m_name: str
+    m_position: str
+    com_name: str
 
-print("✅ auth.py import 정상 작동됨!")
+    class Config:
+        orm_mode = True
+
+
+# ✅ DB 생성용 (SQLAlchemy 모델 매핑)
+class UserCreate(BaseModel):
+    m_id: str = Field(..., max_length=20)
+    m_pw: str = Field(..., max_length=20)
+    m_name: str = Field(..., max_length=50)
+    m_tel: str = Field(..., max_length=20)
+    charge_line: str = Field(..., max_length=10)
+    com_name: str = Field(..., max_length=50)
+    m_position: str = Field(..., max_length=20)
+    start_date: str = Field(..., max_length=30)
+
+
+# ✅ 수정용
+class UserUpdate(BaseModel):
+    m_name: Optional[str] = Field(None, max_length=50)
+    m_tel: Optional[str] = Field(None, max_length=20)
+    charge_line: Optional[str] = Field(None, max_length=10)
+    com_name: Optional[str] = Field(None, max_length=50)
+    m_position: Optional[str] = Field(None, max_length=20)
+    start_date: Optional[str] = Field(None, max_length=30)
+
+    class Config:
+        orm_mode = True

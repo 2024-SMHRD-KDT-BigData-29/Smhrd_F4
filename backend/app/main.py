@@ -12,8 +12,6 @@ from app.api import auth, dashboard  # 상대경로 아님에 주의!
 
 app = FastAPI(title="Worklean API")
 
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,9 +26,10 @@ app.include_router(dashboard.router, prefix="/api/dashboard")
 
 @app.get("/")
 def root():
-    return {"message": "Worklean API 서버 실행 중"}
+    return {"message": "Worklean API 서버 실행 중 + http://127.0.0.1:8000/docs <- api문서 사이트"}
 
 # ✅ PyCharm에서 직접 실행 가능하도록 추가
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=True)
+
