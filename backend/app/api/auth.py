@@ -1,68 +1,69 @@
-from pydantic import BaseModel, Field
-from typing import Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordBearer
+from app.db.database import get_db
+from app.model.user_model import User
+from app.schema.user import SignupRequest, SignupResponse, LoginRequest, LoginResponse, UserResponse
+from app.util.jwt_handler import create_token, decode_token  # JWT 유틸 함수
+from app.util.jwt_bearer import JWTBearer  # JWT 인증 의존성
 
-router = APIRouter()
-
-# ✅ 회원가입용
-class SignupRequest(BaseModel):
-    m_id: str
-    m_pw: str
-    m_name: str
-    m_tel: str
-    charge_line: str
-    com_name: str
-    m_position: str
-    start_date: str
+router = APIRouter(prefix="/api/auth", tags=["Auth"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
-class SignupResponse(BaseModel):
-    status: str
-    message: str
+# ✅ 1. 회원가입
+@router.post("/signup", response_model=SignupResponse)
+def signup(user: SignupRequest, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.m_id == user.m_id).first()
+    if existing:
+        return {"status": "error", "message": "이미 존재하는 ID입니다."}
+
+    new_user = User(**user.dict())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {
+        "status": "ok",
+        "user_id": new_user.m_id,
+        "message": "관리자 계정이 성공적으로 생성되었습니다."
+    }
 
 
-# ✅ 로그인용
-class LoginRequest(BaseModel):
-    m_id: str
-    m_pw: str
+# ✅ 2. 로그인
+@router.post("/login", response_model=LoginResponse)
+def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.m_id == credentials.m_id, User.m_pw == credentials.m_pw).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
+
+    token = create_token(user)  # JWT 토큰 생성
+    return {
+        "status": "ok",
+        "user": {
+            "m_id": user.m_id,
+            "m_name": user.m_name,
+            "m_position": user.m_position,
+            "com_name": user.com_name,
+            "role": "manager"  # 정적 값 or DB에서 받아올 수 있음
+        },
+        "token": token
+    }
 
 
-class LoginResponse(BaseModel):
-    status: str
-    user: Optional["UserResponse"]  # 실제 사용자 정보 포함
+# ✅ 3. 로그아웃
+@router.get("/logout")
+def logout():
+    return {
+        "status": "logged_out",
+        "message": "로그아웃이 완료되었습니다."
+    }
 
 
-# ✅ 유저 정보 응답용
-class UserResponse(BaseModel):
-    m_id: str
-    m_name: str
-    m_position: str
-    com_name: str
-
-    class Config:
-        orm_mode = True
-
-
-# ✅ DB 생성용 (SQLAlchemy 모델 매핑)
-class UserCreate(BaseModel):
-    m_id: str = Field(..., max_length=20)
-    m_pw: str = Field(..., max_length=20)
-    m_name: str = Field(..., max_length=50)
-    m_tel: str = Field(..., max_length=20)
-    charge_line: str = Field(..., max_length=10)
-    com_name: str = Field(..., max_length=50)
-    m_position: str = Field(..., max_length=20)
-    start_date: str = Field(..., max_length=30)
-
-
-# ✅ 수정용
-class UserUpdate(BaseModel):
-    m_name: Optional[str] = Field(None, max_length=50)
-    m_tel: Optional[str] = Field(None, max_length=20)
-    charge_line: Optional[str] = Field(None, max_length=10)
-    com_name: Optional[str] = Field(None, max_length=50)
-    m_position: Optional[str] = Field(None, max_length=20)
-    start_date: Optional[str] = Field(None, max_length=30)
-
-    class Config:
-        orm_mode = True
+# ✅ 4. 사용자 정보 조회
+@router.get("/me", response_model=UserResponse)
+def get_user_info(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    payload = decode_token(token)
+    user = db.query(User).filter(User.m_id == payload["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자 정보를 찾을 수 없습니다.")
+    return user

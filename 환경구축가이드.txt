@@ -28,9 +28,9 @@
 4. npm install react-router-dom chart.js react-chartjs-2
 
 # FastAPI 설치
-1. 터미널창에서 python -m venv .venv 타이핑
-2. 터미널창에서 source .venv\Scripts\activate 타이핑
-3. 터미널창에서 pip install fastapi uvicorn ( FastAPI + 서버 ) 설치
+1. 터미널창에서 pip install fastapi[all] 타이핑
+2. pip install python-jose 타이핑 <- jwt토큰 의존성
+
 
 # DB관련 설치 ( MySQL, Redis )
 pip install sqlalchemy pymysql
