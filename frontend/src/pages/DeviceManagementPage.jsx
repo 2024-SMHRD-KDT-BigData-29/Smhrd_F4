@@ -166,14 +166,14 @@ const DeviceManagementPage = ({ currentUser }) => {
           return;
         }
         const response = await addDeviceAPI(payload);
-        // setDevices(prevDevices => [...prevDevices, response.data]); // 성공 시 응답받은 객체로 추가
+        setDevices(prevDevices => [...prevDevices, response.data]); // 성공 시 응답받은 객체로 추가
         loadDevices(); // 또는 목록을 다시 불러옴
         alert("새 장치가 성공적으로 추가되었습니다.");
       } else { // 수정
         const response = await updateDeviceAPI(payload.eb_idx, payload);
-        // setDevices(prevDevices => prevDevices.map(device =>
-        //   device.eb_idx === payload.eb_idx ? response.data : device
-        // ));
+        setDevices(prevDevices => prevDevices.map(device =>
+          device.eb_idx === payload.eb_idx ? response.data : device
+        ));
         loadDevices(); // 또는 목록을 다시 불러옴
         alert(`장치 ID '${payload.eb_idx}' 정보가 수정되었습니다.`);
       }
