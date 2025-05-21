@@ -12,7 +12,8 @@ class SensorDataRequest(BaseModel):
     humidity: Optional[float] = Field(None)
     pm10: Optional[float] = Field(..., description="감지된 미세먼지 PM10")
     pm25: Optional[float] = Field(..., description="감지된 미세먼지 PM2.5")
-    outlier: bool = Field(..., description="이상치 여부")
+    # outlier: bool = Field(..., description="이상치 여부")
+    outlier: bool = Field(None)
 
 # ✅ 센서 응답용
 class SensorDataResponse(BaseModel):

@@ -33,9 +33,11 @@ def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
         redis_key = f"sensor:{data.se_idx}:{timestamp}"
         redis_value = data.dict()
 
+
         # Redis 저장
         r.set(redis_key, json.dumps(redis_value))
 
+        print("[RECEIVED]", data.dict())  # ← 이렇게 로그 찍으면 더 확실히 추적 가능
         return {"status": "ok", "saved_to": "redis"}
 
     except Exception as e:
