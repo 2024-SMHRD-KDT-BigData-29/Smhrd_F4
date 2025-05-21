@@ -7,7 +7,7 @@ from app.schema.user import SignupRequest, SignupResponse, LoginRequest, LoginRe
 from app.util.jwt_handler import create_token, decode_token  # JWT 유틸 함수
 from app.util.jwt_bearer import JWTBearer  # JWT 인증 의존성
 
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
+router = APIRouter( tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
