@@ -1,59 +1,38 @@
 // src/pages/LoginPage.jsx
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-// import { loginAPI } from '../apiService'; // 실제 API 호출은 잠시 주석 처리
-
-// 테스트용 Mock 사용자 정보 (API 연동 전 임시 사용)
-const MOCK_USERS = {
-  "admin": { password: "password", role: "admin", m_name: "관리자", com_name: "TestCompany" }, // 상세 정보 추가
-  "user": { password: "password", role: "user", m_name: "사용자", com_name: "TestCompany" }
-};
+import React, { useState } from 'react'; // React와 useState import
+import { useNavigate, Link } from 'react-router-dom'; // useNavigate와 Link import
+import { loginAPI } from '../apiService'; // loginAPI import (경로를 실제 위치에 맞게 수정하세요. 예: '../api/apiService')
 
 function LoginPage({ onLoginSuccess }) {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // useNavigate hook 사용
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => { // async는 유지해도 괜찮습니다.
+  const handleLogin = async () => {
     setMessage('');
     setIsLoading(true);
 
-    // --- API 호출 대신 Mock 로그인 로직 사용 ---
-    const userCredentials = MOCK_USERS[username];
-
-    if (userCredentials && userCredentials.password === password) {
-      // localStorage에 가짜 토큰 저장 (선택 사항, 실제 API 연동 시에는 서버 토큰 사용)
-      localStorage.setItem('authToken', 'fake-jwt-token-for-testing');
-
-      const loggedInUser = { // API 응답의 user 객체 형식에 맞춰서 생성
-        m_id: username,
-        m_name: userCredentials.m_name,
-        com_name: userCredentials.com_name,
-        role: userCredentials.role
-        // API 명세서에 있는 다른 user 필드들도 필요하다면 추가
-      };
-
-      onLoginSuccess(loggedInUser.role, loggedInUser); // App.js의 onLoginSuccess 호출
-      navigate('/'); // 대시보드 홈으로 리디렉션
-    } else {
-      setMessage('아이디 또는 비밀번호가 올바르지 않습니다. (Mock)');
-    }
-    // --- Mock 로그인 로직 끝 ---
-
-    /* --- 실제 API 호출 로직 (나중에 주석 해제) ---
     try {
+      // API 요청 시에는 명세서에 맞는 키 이름 사용
       const response = await loginAPI({ m_id: username, m_pw: password });
+
       if (response.data && response.data.status === 'ok') {
         localStorage.setItem('authToken', response.data.token);
+
         const loggedInUser = response.data.user;
-        onLoginSuccess(loggedInUser.role, loggedInUser);
-        navigate('/');
+
+        // App.js의 onLoginSuccess에 사용자 정보 전달
+        onLoginSuccess(loggedInUser.role, loggedInUser); // App.js의 handleLogin이 두 번째 인자로 사용자 객체를 받도록 수정 권장
+
+        navigate('/'); // 대시보드 홈으로 리디렉션 (App.js에서 /dashboard로 추가 리디렉션 될 수 있음)
       } else {
+        // API 응답은 성공(2xx)했으나, status가 'ok'가 아닌 경우 (예: 백엔드에서 보낸 에러 메시지)
         setMessage(response.data.message || '로그인에 실패했습니다. (서버 응답 오류)');
       }
     } catch (error) {
+      // 네트워크 에러 또는 API 서버가 4xx/5xx 에러를 응답한 경우
       if (error.response && error.response.data && error.response.data.message) {
         setMessage(error.response.data.message);
       } else {
@@ -63,8 +42,6 @@ function LoginPage({ onLoginSuccess }) {
     } finally {
       setIsLoading(false);
     }
-    */
-   setIsLoading(false); // Mock 로직 사용 시에도 finally 대신 여기에 위치
   };
 
   return (
