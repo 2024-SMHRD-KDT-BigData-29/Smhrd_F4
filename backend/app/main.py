@@ -22,7 +22,7 @@ app.add_middleware(
 
 # Swagger API 자동문서 사이트 등록 /docs
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-app.include_router(dashboard.router, prefix="/api/dashboard")
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
 @app.get("/")
 def root():
