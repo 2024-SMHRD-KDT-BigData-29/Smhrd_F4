@@ -29,31 +29,44 @@ class SensorDataResponse(BaseModel):
     status: str
     saved_to: str
 
+
 @router.post("/data", response_model=SensorDataResponse)
 def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
     try:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Redis 저장
         redis_key = f"sensor:{data.se_idx}:{timestamp}"
         redis_value = data.dict()
-
-        # ✅ Redis 저장
         r.set(redis_key, json.dumps(redis_value))
 
-        # ✅ MySQL 저장도 같이 수행
-        sensor_data = SensorData(
-            se_idx=data.se_idx,
+        created_at = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+        # ✅ MySQL에 분리 저장 (se_idx=1 → 온습도, se_idx=2 → 미세먼지)
+        sensor_temp_hum = SensorData(
+            se_idx=1,
+            created_at=created_at,
             temp=data.temp,
             humidity=data.humidity,
+            pm10=None,
+            pm25=None,
+            outlier=data.outlier
+        )
+        sensor_dust = SensorData(
+            se_idx=2,
+            created_at=created_at,
+            temp=None,
+            humidity=None,
             pm10=data.pm10,
             pm25=data.pm25,
-            outlier=data.outlier,
-            created_at=datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            outlier=data.outlier
         )
-        db.add(sensor_data)
+
+        db.add_all([sensor_temp_hum, sensor_dust])
         db.commit()
 
-        print("[RECEIVED + SAVED]", data.dict())
-        return {"status": "ok", "saved_to": "redis + mysql"}
+        print("[RECEIVED + SPLIT SAVED]", data.dict())
+        return {"status": "ok", "saved_to": "redis + mysql (split by se_idx)"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"센서 데이터 저장 실패: {str(e)}")
