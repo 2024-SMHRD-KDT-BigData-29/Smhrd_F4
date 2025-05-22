@@ -42,3 +42,21 @@ def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"센서 데이터 저장 실패: {str(e)}")
+
+# api 호출예시
+# GET /api/sensor/latest?se_idx=1 
+@router.get("/latest", response_model=dict)
+def get_latest_sensor_data(se_idx: int):
+    try:
+        # Redis에서 해당 se_idx로 시작하는 key 목록 조회
+        keys = r.keys(f"sensor:{se_idx}:*")
+        if not keys:
+            raise HTTPException(status_code=404, detail="데이터 없음")
+
+        # 최신 키 찾기
+        latest_key = sorted(keys)[-1]  # 시간순으로 정렬 후 마지막
+        data = json.loads(r.get(latest_key))
+        return {"key": latest_key.decode() if isinstance(latest_key, bytes) else latest_key, "data": data}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"조회 실패: {str(e)}")
