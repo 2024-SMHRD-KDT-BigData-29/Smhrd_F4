@@ -17,12 +17,14 @@ function LoginPage({ onLoginSuccess }) {
     try {
       // API 요청 시에는 명세서에 맞는 키 이름 사용
       const response = await loginAPI({ m_id: username, m_pw: password });
+      console.log('Login API Full Response Data:', response.data);
 
       if (response.data && response.data.status === 'ok') {
         localStorage.setItem('authToken', response.data.token);
 
         const loggedInUser = response.data.user;
-
+        console.log('Extracted loggedInUser object:', loggedInUser); // ⭐ loggedInUser 객체 내용 확인
+        console.log('Value of loggedInUser.role:', loggedInUser.role); // ⭐ loggedInUser.role 값 확
         // App.js의 onLoginSuccess에 사용자 정보 전달
         onLoginSuccess(loggedInUser.role, loggedInUser); // App.js의 handleLogin이 두 번째 인자로 사용자 객체를 받도록 수정 권장
 

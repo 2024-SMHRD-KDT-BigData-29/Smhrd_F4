@@ -6,7 +6,7 @@ import { Bar } from 'react-chartjs-2';
 const styles = {
   chartCard: { // DataCard와 유사한 기본 카드 스타일
     backgroundColor: 'white',
-    padding: '15px', // DataCard와 통일
+    padding: '20px', // DataCard와 통일
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     display: 'flex',
@@ -14,6 +14,7 @@ const styles = {
     flex: 1, // 부모가 flex 컨테이너일 때 비율대로 늘어남
     minWidth: '300px', // 최소 너비
     paddingBottom: '10px', // 차트 하단 여백을 위해
+    marginBottom: '7px',
   },
   chartTitle: {
     marginBottom: '15px',

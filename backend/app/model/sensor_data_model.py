@@ -7,7 +7,7 @@ class SensorData(Base):
     __tablename__ = "tb_sensor_data"
 
     sd_idx = Column(Integer, primary_key=True, index=True, autoincrement=True, nullable=False, comment="센서 데이터 식별번호")
-    se_idx = Column(Integer, ForeignKey("tb_sensor_equip.se_idx"), nullable=False, comment="센서 장비 식별번호")
+    se_idx = Column(Integer, ForeignKey("tb_sensor.se_idx"), nullable=False, comment="센서 장비 식별번호")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="데이터 수집 일시")
     temp = Column(Float, nullable=True, comment="감지된 온도")
     humidity = Column(Float, nullable=True, comment="감지된 습도")
