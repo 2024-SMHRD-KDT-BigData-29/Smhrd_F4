@@ -2,12 +2,16 @@
 import React, { useState, useEffect } from 'react'; // useState import 확인!
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // React Router DOM import 확인!
 
-import Sidebar from '../../../Users/smhrd/Desktop/components/components/dashboard/Sidebar'; // Sidebar import 확인!
-import LoginPage from '../../../Users/smhrd/Desktop/components/pages/LoginPage'; // LoginPage import 확인!
-import SignUpPage from '../../../Users/smhrd/Desktop/components/pages/SignUpPage'; // SignUpPage import 추가
-import DashboardPage from '../../../Users/smhrd/Desktop/components/pages/DashboardPage'; // DashboardPage import 확인!
-import AnomalyHistoryPage from '../../../Users/smhrd/Desktop/components/pages/AnomalyHistoryPage'; // AnomalyHistoryPage import 확인!
-import DeviceManagementPage from '../../../Users/smhrd/Desktop/components/pages/DeviceManagementPage';
+// 🔧 컴포넌트 (Sidebar 등)
+import Sidebar from "./components/dashboard/Sidebar";
+
+
+// 🔧 페이지 (화면 단위)
+import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
+import DashboardPage from "./pages/DashboardPage";
+import AnomalyHistoryPage from "./pages/AnomalyHistoryPage";
+import DeviceManagementPage from "./pages/DeviceManagementPage";
 
 import './App.css';
 
