@@ -9,7 +9,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, dashboard, sensor
+from app.db.database import Base, engine
+# SQLAlchemy
+from app.model.sensor_equip_model import SensorEquip
+from app.model.sensor_data_model import SensorData
+from app.model.edge_board_model import EdgeBoard
 
+# SQLAlchemy
+Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Worklean API")
 
 app.add_middleware(
