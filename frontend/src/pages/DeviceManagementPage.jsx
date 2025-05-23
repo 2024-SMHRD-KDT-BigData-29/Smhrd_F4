@@ -1,49 +1,77 @@
-// src/pages/DeviceManagementPage.jsx
-import React, { useState, useEffect } from 'react';
-import {
-  fetchDevicesAPI,
-  addDeviceAPI,
-  updateDeviceAPI,
-  deleteDeviceAPI,
-  fetchHvacEquipmentsAPI,
-  controlHvacAPI
-} from '../apiService'; // ⭐ 실제 API 서비스 import (경로 확인!)
+import React, { useState, useEffect, useCallback } from 'react';
+// import './DeviceManagementPage.css'; // 필요시 사용
 
-// DeviceModal 컴포넌트는 이전과 동일하게 유지 (내부 로직 변경 없음)
-const DeviceModal = ({ show, onClose, onSave, deviceData, setDeviceData, modalTitle }) => {
-  if (!show) { return null; }
+// --- "측정 장치" 목업 데이터 (eb 테이블 구조 기반) ---
+const mockMeasuringDevices_DBBased = [
+  { eb_idx: 1, he_idx: 1, se_idx: 1, eb_name: 'RPI4-001', m_id: 'admin', eb_loc: 'S1-MetaLab', install_date: '2025-05-16' },
+  { eb_idx: 2, he_idx: 2, se_idx: 2, eb_name: 'RPI4-002', m_id: 'admin', eb_loc: 'S1-DataHub', install_date: '2025-05-17' },
+  { eb_idx: 3, he_idx: 3, se_idx: 3, eb_name: 'RPI4-003', m_id: 'admin', eb_loc: 'S1-ControlRoom', install_date: '2025-05-18' },
+  { eb_idx: 4, he_idx: 4, se_idx: 4, eb_name: 'RPI4-004', m_id: 'admin', eb_loc: 'S1-FactoryZone', install_date: '2025-05-19' },
+  { eb_idx: 5, he_idx: 5, se_idx: 5, eb_name: 'RPI4-005', m_id: 'admin', eb_loc: 'S1-TestBench', install_date: '2025-05-20' },
+];
+
+// --- "공조 설비" 목업 데이터 (기존 유지) ---
+const mockHvacEquipments = [
+  { id: 'hvac-fan-001', type: '환풍기', location: '휴게실 A', lastUpdate: '2025. 5. 19. 오전 10:00:00', status: true },
+  { id: 'hvac-ac-001', type: '에어컨', location: '사무실 B', lastUpdate: '2025. 5. 19. 오전 09:30:00', status: false },
+  { id: 'hvac-purifier-001', type: '공기 청정기', location: '회의실 C', lastUpdate: '2025. 5. 19. 오전 11:00:00', status: true },
+  { id: 'hvac-fan-002', type: '환풍기', location: '작업장 D-1', lastUpdate: '2025. 5. 18. 오후 05:15:00', status: false },
+];
+
+// --- 측정 장치 추가/수정 모달 ---
+const MeasuringDeviceModal = ({ show, onClose, onSave, deviceData, setDeviceData, modalTitle }) => {
+  if (!show) {
+    return null;
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // install_date 필드는 YYYY-MM-DD 형식으로 처리
     setDeviceData(prev => ({ ...prev, [name]: value }));
   };
+
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 구하기 (설치일 기본값용)
+  const todayDateString = new Date().toISOString().split('T')[0];
+
   return (
-    <div className={`modal ${show ? 'show' : ''}`}>
+    <div className="modal show">
       <div className="modal-content">
         <div className="modal-header">
-          <h3 id="modalTitle">{modalTitle}</h3>
+          <h3>{modalTitle}</h3>
           <button onClick={onClose} className="close-button">&times;</button>
         </div>
         <div className="modal-body">
-          <form id="deviceForm">
-            <div className="form-group">
-              <label htmlFor="eb_idx_input">장치 ID (eb_idx):</label>
-              <input type="text" id="eb_idx_input" name="eb_idx" placeholder="고유 ID 입력 (예: FAB1-RPi-001)" value={deviceData.eb_idx || ''} onChange={handleChange} required disabled={modalTitle !== "새 장치 추가"} />
-            </div>
+          <form id="measuringDeviceForm">
+            {/* eb_idx는 수정 시에만 표시, 새 장치 추가 시에는 자동 생성되므로 입력받지 않음 (또는 숨김 처리) */}
+            {modalTitle === "장치 정보 수정" && deviceData.eb_idx && (
+              <div className="form-group">
+                <label htmlFor="eb_idx_input">장치 ID (eb_idx):</label>
+                <input type="text" id="eb_idx_input" name="eb_idx" value={deviceData.eb_idx} readOnly disabled />
+              </div>
+            )}
             <div className="form-group">
               <label htmlFor="eb_name_input">장치명 (eb_name):</label>
-              <input type="text" id="eb_name_input" name="eb_name" placeholder="Raspberry Pi 모델 및 센서 정보" value={deviceData.eb_name || ''} onChange={handleChange} required />
+              <input type="text" id="eb_name_input" name="eb_name" placeholder="예: RPI4-00X" value={deviceData.eb_name || ''} onChange={handleChange} required />
             </div>
             <div className="form-group">
               <label htmlFor="eb_loc_input">설치 위치 (eb_loc):</label>
-              <input type="text" id="eb_loc_input" name="eb_loc" placeholder="공장 내 상세 위치" value={deviceData.eb_loc || ''} onChange={handleChange} />
+              <input type="text" id="eb_loc_input" name="eb_loc" placeholder="예: S1-MetaLab" value={deviceData.eb_loc || ''} onChange={handleChange} required />
             </div>
             <div className="form-group">
-              <label htmlFor="eb_serial_num_input">시리얼 번호 (eb_serial_num):</label>
-              <input type="text" id="eb_serial_num_input" name="eb_serial_num" placeholder="장치 시리얼 번호" value={deviceData.eb_serial_num || ''} onChange={handleChange} />
+              <label htmlFor="m_id_input">담당자 (m_id):</label>
+              <input type="text" id="m_id_input" name="m_id" placeholder="예: admin" value={deviceData.m_id || ''} onChange={handleChange} required />
             </div>
             <div className="form-group">
-              <label htmlFor="install_date_input">설치 날짜 (install_date):</label>
-              <input type="date" id="install_date_input" name="install_date" value={deviceData.install_date || ''} onChange={handleChange} />
+              <label htmlFor="install_date_input">설치일 (install_date):</label>
+              <input type="date" id="install_date_input" name="install_date" value={deviceData.install_date || todayDateString} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+              <label htmlFor="he_idx_input">HE_IDX (선택):</label>
+              <input type="number" id="he_idx_input" name="he_idx" placeholder="숫자 입력" value={deviceData.he_idx || ''} onChange={handleChange} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="se_idx_input">SE_IDX (선택):</label>
+              <input type="number" id="se_idx_input" name="se_idx" placeholder="숫자 입력" value={deviceData.se_idx || ''} onChange={handleChange} />
             </div>
           </form>
         </div>
@@ -57,288 +85,217 @@ const DeviceModal = ({ show, onClose, onSave, deviceData, setDeviceData, modalTi
 };
 
 
-const DeviceManagementPage = ({ currentUser }) => {
-  const [devices, setDevices] = useState([]);
+// --- DeviceManagementPage 컴포넌트 ---
+const DeviceManagementPage = () => {
+  // "측정 장치" 상태
+  const [measuringDevices, setMeasuringDevices] = useState([]);
+  const [showMeasuringDeviceModal, setShowMeasuringDeviceModal] = useState(false);
+  const [currentMeasuringDevice, setCurrentMeasuringDevice] = useState({});
+  const [measuringDeviceModalTitle, setMeasuringDeviceModalTitle] = useState("새 측정 장치 추가");
+  const [loadingMeasuringDevices, setLoadingMeasuringDevices] = useState(true); // 측정 장치 로딩 상태
+
+  // "공조 설비" 상태 (기존 유지)
   const [hvacEquipments, setHvacEquipments] = useState([]);
+  const [loadingHvac, setLoadingHvac] = useState(true); // 공조 설비 로딩 상태 (필요시)
 
-  const [showDeviceModal, setShowDeviceModal] = useState(false);
-  const [currentDeviceData, setCurrentDeviceData] = useState({
-    eb_idx: '', eb_name: '', eb_loc: '', install_date: '', eb_serial_num: '', m_id: ''
-  });
-  const [deviceModalTitle, setDeviceModalTitle] = useState("새 장치 추가");
-
-  const [isLoadingDevices, setIsLoadingDevices] = useState(false);
-  const [devicesError, setDevicesError] = useState(null);
-  const [isLoadingHvac, setIsLoadingHvac] = useState(false);
-  const [hvacError, setHvacError] = useState(null);
-
-  // 데이터 로드 함수
-  const loadDevices = async () => {
-    setIsLoadingDevices(true);
-    setDevicesError(null);
-    try {
-      const response = await fetchDevicesAPI();
-      // API 명세서에 따르면 응답이 [{ eb_idx: ..., eb_name: ..., ... }] 형태
-      // 만약 API 응답이 { "status": "ok", "data": [...] } 형태라면 response.data.data 사용
-      setDevices(response.data || []);
-    } catch (error) {
-      console.error("Error fetching devices:", error.response || error);
-      setDevicesError("측정 장치 목록을 불러오는 데 실패했습니다.");
-      setDevices([]); // 에러 발생 시 빈 배열로
-    } finally {
-      setIsLoadingDevices(false);
-    }
-  };
-
-  const loadHvacEquipments = async () => {
-    setIsLoadingHvac(true);
-    setHvacError(null);
-    try {
-      const response = await fetchHvacEquipmentsAPI(); // 이 API는 명세에 없으므로, 구현 필요
-      // 응답 형식을 { "status": "ok", "data": [...] } 또는 [...] 로 가정
-      setHvacEquipments(response.data || []);
-    } catch (error) {
-      console.error("Error fetching HVAC equipments:", error.response || error);
-      setHvacError("공조 설비 목록을 불러오는 데 실패했습니다.");
-      setHvacEquipments([]); // 에러 발생 시 빈 배열로
-    } finally {
-      setIsLoadingHvac(false);
-    }
-  };
-
-  useEffect(() => {
-    loadDevices();
-    loadHvacEquipments();
+  // 측정 장치 목업 데이터 로드 함수
+  const loadMeasuringDevices = useCallback(async () => {
+    setLoadingMeasuringDevices(true);
+    // API 호출 대신 목업 데이터 사용 (약간의 딜레이 시뮬레이션)
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setMeasuringDevices(mockMeasuringDevices_DBBased);
+    setLoadingMeasuringDevices(false);
   }, []);
 
+  // 공조 설비 목업 데이터 로드 함수 (기존 유지)
+  const loadHvacEquipments = useCallback(async () => {
+    setLoadingHvac(true);
+    await new Promise(resolve => setTimeout(resolve, 100)); // 딜레이 시뮬레이션
+    setHvacEquipments(mockHvacEquipments);
+    setLoadingHvac(false);
+  }, []);
+
+
+  useEffect(() => {
+    loadMeasuringDevices();
+    loadHvacEquipments();
+  }, [loadMeasuringDevices, loadHvacEquipments]); // 의존성 배열에 추가
+
   // --- 측정 장치 핸들러 ---
-  const handleAddDevice = () => {
-    setCurrentDeviceData({
-      eb_idx: '', eb_name: '', eb_loc: '', install_date: '', eb_serial_num: '',
-      m_id: currentUser?.m_id || '' // 로그인한 사용자 m_id (API 명세 확인하여 필요한 필드만 전송)
-    });
-    setDeviceModalTitle("새 장치 추가");
-    setShowDeviceModal(true);
+  const handleAddMeasuringDevice = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setCurrentMeasuringDevice({ eb_name: '', eb_loc: '', m_id: 'admin', install_date: today, he_idx: null, se_idx: null });
+    setMeasuringDeviceModalTitle("새 측정 장치 추가");
+    setShowMeasuringDeviceModal(true);
   };
 
-  const handleEditDevice = (device) => {
-    setCurrentDeviceData(device); // device 객체는 API 응답 형식과 일치
-    setDeviceModalTitle("장치 정보 수정");
-    setShowDeviceModal(true);
+  const handleEditMeasuringDevice = (device) => {
+    setCurrentMeasuringDevice({ ...device }); // 원본 수정을 피하기 위해 복사본 전달
+    setMeasuringDeviceModalTitle("장치 정보 수정");
+    setShowMeasuringDeviceModal(true);
   };
 
-  const handleDeleteDevice = async (eb_idx) => {
-    if (window.confirm(`정말로 장치 ID '${eb_idx}'를 삭제하시겠습니까?`)) {
-      setIsLoadingDevices(true); // 특정 장치에 대한 로딩 상태 관리가 더 좋을 수 있음
-      try {
-        await deleteDeviceAPI(eb_idx); // API 호출
-        setDevices(prevDevices => prevDevices.filter(device => device.eb_idx !== eb_idx));
-        console.log("삭제된 장치 ID (eb_idx):", eb_idx);
-        alert(`장치 ID '${eb_idx}'가 삭제되었습니다.`);
-      } catch (error) {
-        console.error("Error deleting device:", error.response || error);
-        alert(`장치 삭제 중 오류가 발생했습니다: ${error.response?.data?.message || error.message}`);
-      } finally {
-        setIsLoadingDevices(false);
-      }
+  const handleDeleteMeasuringDevice = (eb_idx_to_delete) => {
+    if (eb_idx_to_delete === 1) {
+      alert("RPI4-001 (eb_idx: 1) 장치는 핵심 장비이므로 삭제할 수 없습니다.");
+      return;
+    }
+    if (window.confirm(`정말로 장치 ID '${eb_idx_to_delete}'를 삭제하시겠습니까? (목업 데이터에서만 제거)`)) {
+      setMeasuringDevices(prevDevices => prevDevices.filter(device => device.eb_idx !== eb_idx_to_delete));
+      console.log("삭제된 측정 장치 ID (목업):", eb_idx_to_delete);
     }
   };
 
-  const handleSaveDevice = async () => {
-    // API로 보낼 payload (API 명세에 따라 실제 필요한 필드만 포함시켜야 함)
-    // 예를 들어, eb_idx, eb_name, eb_loc, eb_serial_num, install_date, m_id 등
-    const payload = { ...currentDeviceData };
-    if (currentUser && currentUser.m_id && !payload.m_id) {
-        payload.m_id = currentUser.m_id;
-    }
-    // install_date 형식 변환 (API가 YYYY-MM-DDTHH:mm:ss를 요구한다면)
-    if (payload.install_date && payload.install_date.length === 10) { // YYYY-MM-DD 형식인지 체크
-        payload.install_date = `${payload.install_date}T00:00:00`;
+  const handleSaveMeasuringDevice = () => {
+    if (!currentMeasuringDevice.eb_name || !currentMeasuringDevice.eb_loc || !currentMeasuringDevice.m_id || !currentMeasuringDevice.install_date) {
+        alert("장치명, 설치 위치, 담당자, 설치일은 필수 입력 항목입니다.");
+        return;
     }
 
-
-    setIsLoadingDevices(true);
-    try {
-      if (deviceModalTitle === "새 장치 추가") {
-        if (!payload.eb_idx) {
-          alert("장치 ID (eb_idx)를 입력해주세요.");
-          setIsLoadingDevices(false);
-          return;
-        }
-        const response = await addDeviceAPI(payload);
-        setDevices(prevDevices => [...prevDevices, response.data]); // 성공 시 응답받은 객체로 추가
-        loadDevices(); // 또는 목록을 다시 불러옴
-        alert("새 장치가 성공적으로 추가되었습니다.");
-      } else { // 수정
-        const response = await updateDeviceAPI(payload.eb_idx, payload);
-        setDevices(prevDevices => prevDevices.map(device =>
-          device.eb_idx === payload.eb_idx ? response.data : device
-        ));
-        loadDevices(); // 또는 목록을 다시 불러옴
-        alert(`장치 ID '${payload.eb_idx}' 정보가 수정되었습니다.`);
-      }
-      setShowDeviceModal(false);
-    } catch (error) {
-      console.error("Error saving device:", error.response || error);
-      alert(`장치 저장 중 오류가 발생했습니다: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setIsLoadingDevices(false);
+    if (measuringDeviceModalTitle === "새 측정 장치 추가") {
+      // 새 eb_idx 생성 (목업 환경에서는 현재 ID 중 최대값 + 1)
+      const newId = measuringDevices.length > 0 ? Math.max(...measuringDevices.map(d => d.eb_idx)) + 1 : 1;
+      const newDevice = {
+        ...currentMeasuringDevice,
+        eb_idx: newId,
+        // he_idx와 se_idx는 빈 문자열일 경우 null로 저장 (DB 스키마에 따라)
+        he_idx: currentMeasuringDevice.he_idx ? parseInt(currentMeasuringDevice.he_idx, 10) : null,
+        se_idx: currentMeasuringDevice.se_idx ? parseInt(currentMeasuringDevice.se_idx, 10) : null,
+      };
+      setMeasuringDevices(prevDevices => [...prevDevices, newDevice]);
+      console.log("추가된 측정 장치 정보 (목업):", newDevice);
+    } else { // 수정
+      const updatedDevice = {
+        ...currentMeasuringDevice,
+        he_idx: currentMeasuringDevice.he_idx ? parseInt(currentMeasuringDevice.he_idx, 10) : null,
+        se_idx: currentMeasuringDevice.se_idx ? parseInt(currentMeasuringDevice.se_idx, 10) : null,
+      };
+      setMeasuringDevices(prevDevices => prevDevices.map(device =>
+        device.eb_idx === updatedDevice.eb_idx ? updatedDevice : device
+      ));
+      console.log("수정된 측정 장치 정보 (목업):", updatedDevice);
     }
+    setShowMeasuringDeviceModal(false);
   };
 
-  // --- 공조 설비 핸들러 ---
-  const handleHvacStatusToggle = async (he_idx, currentPowerStatus_boolean) => {
-    const newPowerStatus_boolean = !currentPowerStatus_boolean;
-    const hvacValueForApi = newPowerStatus_boolean ? 1 : 0; // API는 0 또는 1을 기대
-
-    const targetEquipment = hvacEquipments.find(eq => eq.he_idx === he_idx);
-    if (!targetEquipment) return;
-
-    const payload = {
-      he_idx: he_idx,
-      c_hvac: hvacValueForApi,
-      c_role: "manual", // API 명세 확인 필요
-      c_type: targetEquipment.he_type, // API 명세 확인 필요 (또는 다른 값)
-    };
-
-    // setIsLoadingHvac(true); // 특정 설비에 대한 로딩 상태 관리가 더 좋을 수 있음
-    try {
-      const response = await controlHvacAPI(payload);
-      if (response.data && response.data.status === 'sent') {
-        // API 성공 응답 후 프론트엔드 상태 업데이트
-        const updatedTime = response.data.controlled_at || new Date().toLocaleString('sv-SE').replace(' ', 'T').slice(0,19); // YYYY-MM-DDTHH:mm:ss
-        setHvacEquipments(prevEquipments =>
-          prevEquipments.map(eq =>
-            eq.he_idx === he_idx ? { ...eq, he_power: newPowerStatus_boolean, last_controlled_at: updatedTime } : eq
-          )
-        );
-        console.log(`Toggled HVAC ID: ${he_idx} to ${newPowerStatus_boolean ? 'ON' : 'OFF'}. Response:`, response.data);
-      } else {
-        alert(response.data.message || "공조 설비 조작에 실패했습니다.");
-      }
-    } catch (error) {
-      console.error("Error controlling HVAC:", error.response || error);
-      alert(`공조 설비 조작 중 오류가 발생했습니다: ${error.response?.data?.message || error.message}`);
-      // 실패 시 UI 롤백 로직 필요
-    } finally {
-      // setIsLoadingHvac(false);
-    }
+  // --- 공조 설비 핸들러 (기존 유지) ---
+  const handleHvacStatusToggle = (equipmentId) => {
+    setHvacEquipments(prevEquipments =>
+      prevEquipments.map(eq =>
+        eq.id === equipmentId
+          ? { ...eq, status: !eq.status, lastUpdate: new Date().toLocaleString('ko-KR') }
+          : eq
+      )
+    );
+    console.log(`Toggled status for HVAC equipment ID: ${equipmentId}`);
   };
 
-  // --- JSX 렌더링 ---
+  // 로딩 UI
+  if (loadingMeasuringDevices || loadingHvac) {
+      return <div className="page-device-management"><p>데이터를 불러오는 중...</p></div>;
+  }
+
   return (
     <div className="page-device-management">
+      {/* --- 측정 장치 관리 섹션 --- */}
       <header className="main-header">
         <div className="header-title-section">
           <h2>측정 장치 관리</h2>
         </div>
         <div className="header-actions">
-          <button onClick={handleAddDevice} className="action-btn primary-btn" disabled={isLoadingDevices || isLoadingHvac}>
-            <i className="fas fa-plus"></i> 새 장치 추가
+          <button onClick={handleAddMeasuringDevice} className="action-btn primary-btn">
+            <i className="fas fa-plus"></i> 새 측정 장치 추가
           </button>
         </div>
       </header>
-
-      <main className="content-area" style={{paddingBottom: '40px'}}>
-        {isLoadingDevices && <p className="loading-message">측정 장치 목록을 불러오는 중...</p>}
-        {devicesError && <p className="error-message">{devicesError}</p>}
-        {!isLoadingDevices && !devicesError && (
-          <div className="device-list-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>장치 ID (eb_idx)</th>
-                  <th>장치명 (eb_name)</th>
-                  <th>설치 위치 (eb_loc)</th>
-                  <th>상태 (status)</th>
-                  <th>PM2.5</th>
-                  <th>PM1.0</th>
-                  <th>온도</th>
-                  <th>습도</th>
-                  <th>최근 업데이트 (lastUpdate)</th>
-                  <th>작업</th>
+      <main className="content-area" style={{ paddingBottom: '40px',paddingLeft: '30px' }}>
+        <div className="device-list-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID </th>
+                <th>장치명</th>
+                <th>설치 위치 </th>
+                <th>담당자 </th>
+                <th>설치일</th>
+                <th>HE_IDX</th>
+                <th>SE_IDX</th>
+                <th>작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {measuringDevices.map(device => (
+                <tr key={device.eb_idx} className={device.eb_idx === 1 ? 'highlighted-device' : ''}>
+                  <td>{device.eb_idx}</td>
+                  <td>
+                    {device.eb_name}
+                    {device.eb_idx === 1 && <span className="rpi-tag"> (RPi)</span>}
+                  </td>
+                  <td>{device.eb_loc}</td>
+                  <td>{device.m_id}</td>
+                  <td>{new Date(device.install_date).toLocaleDateString('ko-KR')}</td>
+                  <td>{device.he_idx !== null ? device.he_idx : 'N/A'}</td>
+                  <td>{device.se_idx !== null ? device.se_idx : 'N/A'}</td>
+                  <td>
+                    <button onClick={() => handleEditMeasuringDevice(device)} className="action-btn mini-btn">수정</button>
+                    {device.eb_idx !== 1 && ( // RPi 장치는 삭제 버튼 비활성화 대신 아예 안 보이게 할 수도 있습니다.
+                      <button onClick={() => handleDeleteMeasuringDevice(device.eb_idx)} className="action-btn mini-btn delete-btn">삭제</button>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody id="devicesTableBody">
-                {devices.map(device => (
-                  <tr key={device.eb_idx}>
-                    <td>{device.eb_idx}</td>
-                    <td>{device.eb_name}</td>
-                    <td className="allow-wrap">{device.eb_loc}</td>
-                    <td>
-                      <span className={`device-status ${String(device.status).toLowerCase()}`}>
-                        {device.status === 'online' ? '온라인' : '오프라인'}
-                      </span>
-                    </td>
-                    <td>{device.pm25 !== undefined ? device.pm25.toFixed(1) : '-'}</td>
-                    <td>{device.pm10 !== undefined ? device.pm10.toFixed(1) : '-'}</td>
-                    <td>{device.temp !== undefined ? device.temp.toFixed(1) : '-'} °C</td>
-                    <td>{device.humidity !== undefined ? device.humidity.toFixed(0) : '-'} %</td>
-                    <td>{device.lastUpdate ? new Date(device.lastUpdate).toLocaleString('ko-KR') : '-'}</td>
-                    <td>
-                      <button onClick={() => handleEditDevice(device)} className="action-btn mini-btn">수정</button>
-                      <button onClick={() => handleDeleteDevice(device.eb_idx)} className="action-btn mini-btn delete-btn">삭제</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {devices.length === 0 && <p className="no-data-message">표시할 측정 장치가 없습니다.</p>}
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {measuringDevices.length === 0 && !loadingMeasuringDevices && <p style={{ textAlign: 'center', padding: '20px' }}>표시할 측정 장치가 없습니다.</p>}
+        </div>
 
-        <h2 style={{ marginTop: '40px', marginBottom: '15px', fontSize: '1.8em', fontWeight: '500', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+        {/* --- 공조 설비 관리 섹션 (기존 유지) --- */}
+        <h2 style={{ marginTop: '40ipx', marginBottom: '15px', fontSize: '1.8em', fontWeght: '500', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
           공조 설비 관리
         </h2>
-        {isLoadingHvac && <p className="loading-message">공조 설비 목록을 불러오는 중...</p>}
-        {hvacError && <p className="error-message">{hvacError}</p>}
-        {!isLoadingHvac && !hvacError && (
-          <div className="device-list-container hvac-list-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>설비 ID (he_idx)</th>
-                  <th>설비 종류 (he_type)</th>
-                  <th>설비명 (he_name)</th>
-                  <th>설치 위치 (he_location)</th>
-                  <th>최근 조작 (last_controlled_at)</th>
-                  <th>상태 (he_power)</th>
+        <div className="device-list-container hvac-list-container">
+          <table>
+            <thead>
+              <tr>
+                <th>설비 ID</th>
+                <th>설비 종류</th>
+                <th>설치 위치</th>
+                <th>최근 업데이트</th>
+                <th>상태 (ON/OFF)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hvacEquipments.map(eq => (
+                <tr key={eq.id}>
+                  <td>{eq.id}</td>
+                  <td>{eq.type}</td>
+                  <td>{eq.location}</td>
+                  <td>{eq.lastUpdate}</td>
+                  <td>
+                    <label className="switch table-switch">
+                      <input
+                        type="checkbox"
+                        checked={eq.status}
+                        onChange={() => handleHvacStatusToggle(eq.id)}
+                      />
+                      <span className="slider round"></span>
+                    </label>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {hvacEquipments.map(eq => (
-                  <tr key={eq.he_idx}>
-                    <td>{eq.he_idx}</td>
-                    <td>{eq.he_type}</td>
-                    <td>{eq.he_name}</td>
-                    <td className="allow-wrap">{eq.he_location}</td>
-                    <td>{eq.last_controlled_at ? new Date(eq.last_controlled_at).toLocaleString('ko-KR') : '-'}</td>
-                    <td>
-                      <label className="switch table-switch">
-                        <input
-                          type="checkbox"
-                          checked={!!eq.he_power}
-                          onChange={() => handleHvacStatusToggle(eq.he_idx, eq.he_power)}
-                        />
-                        <span className="slider round"></span>
-                      </label>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {hvacEquipments.length === 0 && <p className="no-data-message">표시할 공조 설비가 없습니다.</p>}
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+          {hvacEquipments.length === 0 && !loadingHvac && <p style={{ textAlign: 'center', padding: '20px' }}>표시할 공조 설비가 없습니다.</p>}
+        </div>
       </main>
 
-      <DeviceModal
-        show={showDeviceModal}
-        onClose={() => setShowDeviceModal(false)}
-        onSave={handleSaveDevice}
-        deviceData={currentDeviceData}
-        setDeviceData={setCurrentDeviceData}
-        modalTitle={deviceModalTitle}
+      <MeasuringDeviceModal
+        show={showMeasuringDeviceModal}
+        onClose={() => setShowMeasuringDeviceModal(false)}
+        onSave={handleSaveMeasuringDevice}
+        deviceData={currentMeasuringDevice}
+        setDeviceData={setCurrentMeasuringDevice}
+        modalTitle={measuringDeviceModalTitle}
       />
     </div>
   );

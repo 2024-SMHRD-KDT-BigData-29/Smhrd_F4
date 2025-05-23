@@ -1,7 +1,7 @@
 # backend/app/model/edge_board_model.py
 from sqlalchemy import Column, String, Integer, Date, ForeignKey
 from sqlalchemy.orm import relationship
-from ..db.database import Base
+from app.db.database import Base
 
 class EdgeBoard(Base): # DB 테이블명: tb_edge_board
     __tablename__ = "tb_edge_board"

@@ -1,7 +1,7 @@
 # backend/app/model/sensor_device_model.py
 from sqlalchemy import Column, String, Integer, Date, ForeignKey
 from sqlalchemy.orm import relationship
-from ..db.database import Base
+from app.db.database import Base
 
 class SensorDevice(Base): # DB 테이블명: tb_sensor_equip (API 명세서엔 없었음)
     __tablename__ = "tb_sensor_equip" # DB 스키마엔 tb_sensor_device 로 되어있을 수 있음, 확인!

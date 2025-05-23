@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
-from ..db.database import get_db
-from ..model.hvac_model import HvacEquipment
-from ..model.control_model import ControlLog
-from ..schema.control_schema import HvacControlRequest, ControlResponse, ControlCreate
+from app.db.database import get_db
+from app.model.hvac_model import HvacEquipment
+from app.model.control_model import ControlLog
+from app.schema.control_schema import HvacControlRequest, ControlResponse, ControlCreate
 
 # from ..core.security import get_current_active_user
 # from ..model.user_model import User as UserModel

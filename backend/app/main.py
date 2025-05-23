@@ -6,10 +6,17 @@ print("🔥 실행된 main.py 경로:", os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # => SmhrdF4_git/backend 경로를 PYTHONPATH에 강제로 추가
 
+from app.db.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, dashboard  # 상대경로 아님에 주의!
+from app.api import auth, dashboard, sensor  # 상대경로 아님에 주의!
 
+# SQLAlchemy
+from app.model.sensor_equip_model import SensorEquip  # ✅ 이 줄 추가
+from app.model.sensor_data_model import SensorData
+from app.model.edge_board_model import EdgeBoard
+
+Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Worklean API")
 
 app.add_middleware(
@@ -21,8 +28,9 @@ app.add_middleware(
 )
 
 # Swagger API 자동문서 사이트 등록 /docs
-app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(auth.router, tags=["Auth"])
+app.include_router(dashboard.router, tags=["Dashboard"])
+app.include_router(sensor.router, tags=["Sensor"])
 
 @app.get("/")
 def root():
@@ -31,5 +39,5 @@ def root():
 # ✅ PyCharm에서 직접 실행 가능하도록 추가
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("backend.app.main:app", host="0.0.0.0", port=8000, reload=True)
 
