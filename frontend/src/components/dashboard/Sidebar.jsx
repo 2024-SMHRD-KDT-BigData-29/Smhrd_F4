@@ -6,7 +6,7 @@ import { NavLink, useNavigate } from 'react-router-dom'; // Link 대신 NavLink�
 
 // activeMenu, setActiveMenu prop은 NavLink를 사용하면 필요 없어질 수 있습니다.
 // 여기서는 일단 제거하고 NavLink의 기능을 활용하는 것으로 가정합니다.
-function Sidebar({ userRole, onLogout }) {
+function Sidebar({ userRole, onLogout,currentUser }) {
   const navigate = useNavigate(); // 로그아웃 후 페이지 이동 등에 사용 가능
 
   // '시스템 설정' 클릭 핸들러 (만약 페이지 이동이 아니라면 현재 방식 유지)

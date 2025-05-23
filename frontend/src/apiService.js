@@ -113,6 +113,12 @@ export const markNotificationAsReadAPI = (a_idx) => {
   // PUT 또는 POST /api/alerts/{a_idx}/read (가정, API 명세에 추가 필요)
   return apiClient.post(`/alerts/${a_idx}/read`);
 };
+export const fetchLatestSensorDataForDashboardAPI = (se_idx) => {
+  // API 명세서에는 /api/sensor/latest?se_idx=1 로 되어 있으므로,
+  // apiClient의 baseURL에 /api 가 포함되어 있다면 '/sensor/latest' 만 사용
+  // baseURL에 /api 가 없다면 '/api/sensor/latest' 사용
+  return apiClient.get(`/sensor/latest?se_idx=${se_idx}`); // 경로 확인!
+};
 
 // apiClient 인스턴스를 직접 export할 필요는 없음 (각 함수를 export하므로)
 // export default apiClient; // 이 라인 삭제 또는 주석 처리 권장

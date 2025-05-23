@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String
-from app.db.database import Base
+from ..db.database import Base
+from datetime import datetime # start_date 기본값 설정 시 필요
 
 # ORM (JPA 같은거)
 class User(Base):
