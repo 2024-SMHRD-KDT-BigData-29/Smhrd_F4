@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from app.model.sensor_data_model import SensorData
 
-r = redis.Redis(host="localhost", port=6379, db=0)
+r = redis.Redis(host="192.168.219.198", port=6379, db=0)
 
 def save_sensor_data_from_redis(db: Session):
     keys = r.keys("sensor:*")

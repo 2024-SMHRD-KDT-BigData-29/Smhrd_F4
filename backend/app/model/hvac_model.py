@@ -1,7 +1,7 @@
 # backend/app/model/hvac_model.py
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.database import Base
+from ..db.database import Base
 
 class HvacEquipment(Base): # DB 테이블명: tb_hvac_equip
     __tablename__ = "tb_hvac_equip"

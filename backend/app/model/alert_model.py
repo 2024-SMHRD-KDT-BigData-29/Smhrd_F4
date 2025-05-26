@@ -2,7 +2,7 @@
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.db.database import Base
+from ..db.database import Base
 
 class Alert(Base): # DB 테이블명: tb_alert
     __tablename__ = "tb_alert"

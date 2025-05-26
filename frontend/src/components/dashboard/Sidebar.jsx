@@ -47,7 +47,7 @@ function Sidebar({ userRole, onLogout,currentUser }) {
           </li>
 
           {/* userRole이 'admin'일 때만 '장치 관리' 메뉴를 보여줍니다. */}
-          {userRole === 'admin' && (
+          { (
             <li>
               <NavLink to="/device-management" className={({ isActive }) => isActive ? 'active' : ''}>
                 <i className="fas fa-microchip"></i> 장치 관리

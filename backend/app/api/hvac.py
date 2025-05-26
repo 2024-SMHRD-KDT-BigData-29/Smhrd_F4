@@ -9,7 +9,7 @@ from ..db.database import get_db
 from ..model.hvac_model import HvacEquipment
 from ..model.edge_board_model import EdgeBoard  # he_location을 위해
 from ..model.control_model import ControlLog  # last_controlled_at을 위해
-from ..schema.hvac_schema import HvacResponse
+from ..schema.hvac_schema import HvacResponse, HvacUpdateRequest
 
 # from ..core.security import get_current_active_user
 # from ..model.user_model import User as UserModel
@@ -52,4 +52,63 @@ async def read_hvac_equipments(
         ))
     return response_data
 
-# TODO: 공조 설비(HvacEquipment 모델) 자체에 대한 POST, PUT, DELETE 엔드포인트 필요시 추가
+
+@router.put("/{he_idx}/", response_model=HvacResponse) # 경로 파라미터로 he_idx 사용, 응답은 HvacResponse
+async def update_hvac_equipment_status(
+    he_idx: int,
+    hvac_data: HvacUpdateRequest, # 요청 본문을 위한 Pydantic 모델
+    db: Session = Depends(get_db)
+    # current_user: UserModel = Depends(get_current_active_user) # 필요시 주석 해제
+):
+    db_hvac_equipment = db.query(HvacEquipment).filter(HvacEquipment.he_idx == he_idx).first()
+
+    if not db_hvac_equipment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="HVAC Equipment not found")
+
+    # 전달받은 hvac_data에서 he_power 값을 가져와 업데이트
+    if hvac_data.he_power is not None: # he_power 값이 명시적으로 전달된 경우에만 업데이트
+        db_hvac_equipment.he_power = hvac_data.he_power
+
+        # (선택적) 다른 필드도 업데이트 하려면 여기에 로직 추가
+        # if hvac_data.he_name is not None:
+        #     db_hvac_equipment.he_name = hvac_data.he_name
+        # ...
+
+        # 제어 로그 기록 (예시)
+        control_log = ControlLog(
+            he_idx=he_idx,
+            c_type="power_toggle", # 또는 "set_power" 등
+            c_role="수동", # 문자열로 저장
+            c_hvac=db_hvac_equipment.he_power,
+            c_date=datetime.now(timezone.utc) # UTC 시간으로 기록
+        )
+        db.add(control_log)
+
+    db.commit()
+    db.refresh(db_hvac_equipment)
+    location = "N/A"
+    if db_hvac_equipment.eb_idx:
+        edge_board = db.query(EdgeBoard.eb_loc).filter(EdgeBoard.eb_idx == db_hvac_equipment.eb_idx).first()
+        if edge_board:
+            location = edge_board.eb_loc
+
+    last_control_log_entry = db.query(ControlLog.c_date) \
+        .filter(ControlLog.he_idx == db_hvac_equipment.he_idx) \
+        .order_by(desc(ControlLog.c_date)) \
+        .first()
+
+    # HvacResponse 모델을 사용하여 응답 객체 생성 및 반환
+    return HvacResponse(
+        he_idx=db_hvac_equipment.he_idx,
+        he_type=db_hvac_equipment.he_type,
+        he_name=db_hvac_equipment.he_name,
+        he_location=location,
+        he_power=db_hvac_equipment.he_power, # 스키마의 he_power 타입(bool)과 DB의 int(0/1) 간 자동변환 주의
+        last_controlled_at=last_control_log_entry.c_date if last_control_log_entry else None,
+        eb_idx=db_hvac_equipment.eb_idx
+    )
+
+
+
+
+

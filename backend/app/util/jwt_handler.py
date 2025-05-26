@@ -6,12 +6,9 @@ SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
 EXPIRE_MINUTES = 60
 
-def create_token(user):
+def create_token(payload: dict):
     expire = datetime.utcnow() + timedelta(minutes=EXPIRE_MINUTES)
-    payload = {
-        "sub": user.m_id,
-        "exp": expire
-    }
+    payload["exp"] = expire
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def decode_token(token):

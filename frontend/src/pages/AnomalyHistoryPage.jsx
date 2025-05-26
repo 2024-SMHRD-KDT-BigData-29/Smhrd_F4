@@ -5,8 +5,7 @@ import './AnomalyHistoryPage.css'; // 페이지별 CSS 로드 (App.css에 관련
 
 const mockAnomalyHistoryData = [
   { a_idx: 1, a_date: '2025-05-20T10:00:00Z', device_identifier: '서버랙 1 온도 센서', a_type: '온도 이상', a_message: '서버실 온도가 설정된 임계치(30°C)를 초과했습니다. 현재 온도: 32°C.', status_처리상태: '확인 필요', is_read: false },
-  { a_idx: 2, a_date: '2025-05-20T09:15:00Z', device_identifier: '메인 출입문 센서', a_type: '비인가 접근 시도', a_message: '메인 출입문에서 승인되지 않은 카드키 접근이 감지되었습니다.', status_처리상태: '조치 완료', is_read: true },
-  { a_idx: 3, a_date: '2025-05-19T17:30:00Z', device_identifier: 'UPS 전원 공급 장치', a_type: '전원 불안정', a_message: 'UPS 입력 전원이 불안정한 상태입니다. 배터리 모드로 전환되었습니다.', status_처리상태: '확인 중', is_read: false },
+
 ];
 
 const formatDisplayDateTime = (isoString) => {

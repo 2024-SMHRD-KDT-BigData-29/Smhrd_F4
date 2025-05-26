@@ -1,7 +1,7 @@
 // src/pages/SignUpPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signupAPI } from '../apiService'; // ⭐ apiService.js에서 signupAPI 함수 import
+import { signupAPI } from '../apiService'; // ⭐ apiService.js에서 signupAPI 함수 import // ⭐ apiService.js에서 signupAPI 함수 import
 
 const SignUpPage = () => {
   const navigate = useNavigate();

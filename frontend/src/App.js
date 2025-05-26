@@ -12,6 +12,7 @@ import SignUpPage from "./pages/SignUpPage";
 import DashboardPage from "./pages/DashboardPage";
 import AnomalyHistoryPage from "./pages/AnomalyHistoryPage";
 import DeviceManagementPage from "./pages/DeviceManagementPage";
+import UserInfoPage from './pages/UserInfoPage';
 
 import './App.css';
 
@@ -51,19 +52,26 @@ function App() {
       const token = localStorage.getItem('authToken');
       if (token) {
         try {
-          // const response = await fetchMeAPI(); // /api/auth/me 호출 (apiService.js에 정의)
-          // if (response.data && response.data.user) {
-          //   handleLogin(response.data.user.role, response.data.user);
-          // } else {
-          //   handleLogout(); // 유효하지 않은 토큰이면 강제 로그아웃
-          // }
+          const res = await fetch("http://localhost:8000/api/auth/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (res.ok) {
+            const user = await res.json();
+            handleLogin("admin", user);  // 또는 user.role이 있으면 그걸 넣어도 됨
+          } else {
+            handleLogout();  // 유효하지 않은 토큰이면 강제 로그아웃
+          }
         } catch (error) {
-          // console.error('Auto login failed:', error);
-          // handleLogout(); // 에러 발생 시 강제 로그아웃
+          console.error("자동 로그인 실패:", error);
+          handleLogout(); // 네트워크 등 에러 시도 강제 로그아웃
         }
       }
     };
-    // attemptAutoLogin(); // 실제 API 연동 시 주석 해제
+
+    attemptAutoLogin(); // ✅ 주석 해제해서 실행되게 만듦
   }, []);
 
 
@@ -92,6 +100,7 @@ function App() {
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLogin} />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="*" element={<Navigate replace to="/login" />} />
+          <Route path="/user-info" element={<UserInfoPage />} />
         </Routes>
       )}
     </Router>

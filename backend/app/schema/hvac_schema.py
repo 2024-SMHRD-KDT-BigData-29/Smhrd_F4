@@ -16,3 +16,16 @@ class HvacResponse(HvacBase):
 
     class Config:
         from_attributes = True # Pydantic V2
+
+class HvacUpdateRequest(BaseModel):
+    # 프론트엔드에서 payload에 ...hvacEquipment로 모든 필드를 보내므로,
+    # 백엔드에서 필요한 필드들을 정의합니다.
+    # he_idx는 URL 경로로 받으므로 여기서는 선택사항이거나 제외 가능합니다.
+    he_type: str
+    he_name: str
+    he_power: int = Field(ge=0, le=1) # 0 또는 1
+    eb_idx: Optional[int] = None
+    # 더 많은 필드를 업데이트하려면 여기에 추가
+
+    class Config:
+        orm_mode = True # SQLAlchemy 모델과 상호작용 시 유용

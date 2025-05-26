@@ -259,33 +259,31 @@ function DashboardPage({ userRole, currentUser }) {
   useEffect(() => {
     const fetchDataAndUpdateDashboard = async () => {
       try {
-        const latestData = await getLatestSensorDataAPI(SENSOR_ID_FOR_DASHBOARD);
+        const [thData, pmData] = await Promise.all([
+          getLatestSensorDataAPI(1), // 온습도
+          getLatestSensorDataAPI(2)  // 미세먼지
+        ]);
 
-        if (latestData && typeof latestData === 'object') { // latestData가 유효한 객체인지 확인
-          setCurrentSensorData({
-            pm25: latestData.pm25 || 0, // 기본값 설정
-            pm10: latestData.pm10 || 0,
-            temp: latestData.temp || 0,
-            humidity: latestData.humidity || 0,
-          });
+        const temp = thData?.temp ?? 0;
+        const humidity = thData?.humidity ?? 0;
+        const pm10 = pmData?.pm10 ?? 0;
+        const pm25 = pmData?.pm25 ?? 0;
 
-          const calculatedAqi = calculateAqi(latestData.pm25);
-          setAqiInfo({
-            value: calculatedAqi.value,
-            status_text: calculatedAqi.status_text,
-          });
+        setCurrentSensorData({ temp, humidity, pm10, pm25 });
 
-          const now = new Date();
-          setPm25History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: latestData.pm25 || 0, time: now }]);
-          setPm10History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: latestData.pm10 || 0, time: now }]);
-          setTempHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: latestData.temp || 0, time: now }]);
-          setHumidityHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: latestData.humidity || 0, time: now }]);
-        } else {
-          console.log("No new data received or data was null/invalid.");
-          // 데이터가 없을 경우 기존 값 유지 또는 초기화
-           setAqiInfo({ value: 0, status_text: '데이터 없음' });
-        }
-      } catch (error) { // 이 catch는 getLatestSensorDataAPI 내부에서 처리되지 않은 에러용
+        const calculatedAqi = calculateAqi(pm25);
+        setAqiInfo({
+          value: calculatedAqi.value,
+          status_text: calculatedAqi.status_text,
+        });
+
+        const now = new Date();
+        setPm25History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm25, time: now }]);
+        setPm10History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm10, time: now }]);
+        setTempHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: temp, time: now }]);
+        setHumidityHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: humidity, time: now }]);
+
+      } catch (error) {
         console.error("Error in fetchDataAndUpdateDashboard:", error);
         setAqiInfo({ value: 0, status_text: '오류' });
       }
@@ -295,6 +293,7 @@ function DashboardPage({ userRole, currentUser }) {
     const intervalId = setInterval(fetchDataAndUpdateDashboard, 5000);
     return () => clearInterval(intervalId);
   }, []);
+
 
   // useEffect 2: 목업 알림 데이터 로드
   useEffect(() => {
