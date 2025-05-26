@@ -26,6 +26,19 @@ async def read_all_edge_boards(
     db_edge_boards = db.query(EdgeBoard).order_by(EdgeBoard.eb_idx).offset(skip).limit(limit).all()
     return db_edge_boards
 
+# --- CREATE (POST) ---
+@router.post("/", response_model=EdgeBoardResponse, status_code=status.HTTP_201_CREATED)
+async def create_edge_board(
+        edge_board_data: EdgeBoardCreate,
+        db: Session = Depends(get_db)
+):
+    new_board = EdgeBoard(**edge_board_data.model_dump())
+    db.add(new_board)
+    db.commit()
+    db.refresh(new_board)
+    return new_board
+
+
 
 
 # --- UPDATE (PUT) ---

@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.db.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, dashboard, sensor, edge_board, hvac  # 상대경로 아님에 주의!
+from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert  # 상대경로 아님에 주의!
 
 # SQLAlchemy
 from app.model.sensor_equip_model import SensorEquip  # ✅ 이 줄 추가
@@ -31,8 +31,10 @@ app.add_middleware(
 app.include_router(auth.router, tags=["Auth"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(sensor.router, tags=["Sensor"])
-app.include_router(edge_board.router, tags=["Edge Boards"])
+app.include_router(edge_board.router)
 app.include_router(hvac.router, tags=["HVAC"])
+app.include_router(control.router)
+app.include_router(alert.router)
 
 
 @app.get("/")

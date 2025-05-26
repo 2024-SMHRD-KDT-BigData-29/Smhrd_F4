@@ -2,9 +2,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.database import get_db
-from typing import Optional
+from typing import Optional, Dict
 from pydantic import BaseModel
 from app.model.sensor_data_model import SensorData
+from app.model.alert_model import Alert
+from app.model.user_model import User
+from app.util.jwt_bearer import JWTBearer
+from app.util.jwt_handler import decode_token
 
 import redis
 import json
@@ -14,6 +18,20 @@ router = APIRouter(prefix="/api/sensor", tags=["Sensor"])
 
 # Redis 클라이언트 설정 (로컬 기준)
 r = redis.Redis(host="localhost", port=6379, db=0)
+
+def get_current_user(
+    token: str = Depends(JWTBearer()),
+    db: Session = Depends(get_db)
+) -> User:
+    payload = decode_token(token)
+    m_id = payload.get("m_id")
+    if not m_id:
+        raise HTTPException(status_code=401, detail="토큰에 사용자 ID가 없습니다.")
+
+    user = db.query(User).filter(User.m_id == m_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    return user
 
 # 요청 바디 모델
 class SensorDataRequest(BaseModel):
@@ -83,4 +101,73 @@ def get_latest_sensor_data(se_idx: int):
     except Exception as e:
         print(f"[ERROR] DB 저장 중 예외 발생: {e}")  # 로그 출력 추가
         raise HTTPException(status_code=500, detail=f"센서 데이터 저장 실패: {str(e)}")
+
+# ✅ 요청 스키마
+class SensorData(BaseModel):
+    temp: Optional[float] = None
+    humidity: Optional[float] = None
+    pm10: Optional[float] = None
+    pm25: Optional[float] = None
+
+# ✅ 응답 스키마
+class AnomalyCheckResponse(BaseModel):
+    is_anomaly: bool
+    score: float
+
+class AnomalyCheckRequest(BaseModel):
+    sd_idx: str
+    data: SensorData
+
+# ✅ 이상치 판별 함수 (비즈니스 로직과 동일)
+def check_outlier(temp=None, humidity=None, pm10=None, pm25=None):
+    if temp is not None and (temp < 21 or temp > 26):
+        return True
+    if humidity is not None and (humidity < 35 or humidity > 60):
+        return True
+    if pm25 is not None and pm25 > 35:
+        return True
+    if pm10 is not None and pm10 > 50:
+        return True
+    return False
+
+
+# ✅ 이상 감지 API
+@router.post("/anomaly-check", response_model=AnomalyCheckResponse)
+def anomaly_check(
+    request: AnomalyCheckRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    data = request.data.dict()
+    is_anomaly = check_outlier(
+        temp=data.get("temp"),
+        humidity=data.get("humidity"),
+        pm10=data.get("pm10"),
+        pm25=data.get("pm25")
+    )
+
+    # ✅ 이상일 경우 항목별로 알림 기록
+    if is_anomaly:
+        if data.get("temp") is not None and (data["temp"] < 21 or data["temp"] > 26):
+            insert_alert(db, current_user.m_id, "온도이상")
+        if data.get("humidity") is not None and (data["humidity"] < 35 or data["humidity"] > 60):
+            insert_alert(db, current_user.m_id, "습도이상")
+        if data.get("pm10") is not None and data["pm10"] > 50:
+            insert_alert(db, current_user.m_id, "pm10이상")
+        if data.get("pm25") is not None and data["pm25"] > 35:
+            insert_alert(db, current_user.m_id, "pm2.5이상")
+
+    return {"is_anomaly": is_anomaly, "score": 0.87}
+
+# 이상치가 탐지됐을 때 tb_alert 자동삽입
+def insert_alert(db: Session, m_id: str, a_type: str):
+    alert = Alert(
+        m_id=m_id,
+        he_idx=1,
+        a_type=a_type
+    )
+    db.add(alert)
+    db.commit()
+    db.refresh(alert)
+    return alert
 

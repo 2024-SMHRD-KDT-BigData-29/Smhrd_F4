@@ -13,8 +13,13 @@ class EdgeBoardBase(BaseModel):
     se_idx: Optional[int] = None  # tb_sensor_equip.se_idx를 참조 (nullable)
 
 # EdgeBoard 생성 시 요청 본문에 사용될 스키마
-class EdgeBoardCreate(EdgeBoardBase):
-    pass
+class EdgeBoardCreate(BaseModel):
+    eb_name: str
+    eb_loc: str
+    m_id: str
+    install_date: date
+    he_idx: Optional[int] = None
+    se_idx: Optional[int] = None
 
 # EdgeBoard 업데이트 시 요청 본문에 사용될 스키마 (모든 필드 선택적)
 class EdgeBoardUpdate(BaseModel):
