@@ -25,6 +25,7 @@ class EdgeBoardUpdate(BaseModel):
     he_idx: Optional[int] = None
     se_idx: Optional[int] = None
 
+
 # API 응답으로 사용될 스키마 (eb_idx 포함)
 class EdgeBoardResponse(EdgeBoardBase):
     eb_idx: int

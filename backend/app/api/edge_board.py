@@ -12,30 +12,7 @@ from app.schema.edge_board_schema import EdgeBoardCreate, EdgeBoardUpdate, EdgeB
 # from ..core.security import get_current_active_user
 # from ..model.user_model import User as UserModel
 
-router = APIRouter(
-    #prefix="/edge-boards",  # API 그룹의 기본 경로
-    tags=["Edge Boards"],  # FastAPI 문서의 태그 그룹명
-)
-
-
-# --- CREATE (POST) ---
-@router.post("/", response_model=EdgeBoardResponse, status_code=status.HTTP_201_CREATED)
-async def create_edge_board(
-        edge_board_data: EdgeBoardCreate,
-        db: Session = Depends(get_db)
-        # current_user: UserModel = Depends(get_current_active_user)
-):
-    # he_idx, se_idx, m_id의 실제 존재 여부 검증은 DB의 FK 제약조건에 의존하거나,
-    # 필요시 여기서 추가적인 로직으로 검증할 수 있습니다.
-    # 예: manager = db.query(ManagerModel).filter(ManagerModel.m_id == edge_board_data.m_id).first()
-    #     if not manager: raise HTTPException(status_code=400, detail="Invalid m_id")
-
-    db_edge_board = EdgeBoard(**edge_board_data.model_dump())
-
-    db.add(db_edge_board)
-    db.commit()
-    db.refresh(db_edge_board)
-    return db_edge_board
+router = APIRouter(prefix="/api/edge-boards", tags=["EdgeBoard"])
 
 
 # --- READ ALL (GET) ---
@@ -49,18 +26,6 @@ async def read_all_edge_boards(
     db_edge_boards = db.query(EdgeBoard).order_by(EdgeBoard.eb_idx).offset(skip).limit(limit).all()
     return db_edge_boards
 
-
-# --- READ ONE (GET by ID) ---
-@router.get("/{eb_idx}", response_model=EdgeBoardResponse)
-async def read_one_edge_board(
-        eb_idx: int,
-        db: Session = Depends(get_db)
-        # current_user: UserModel = Depends(get_current_active_user)
-):
-    db_edge_board = db.query(EdgeBoard).filter(EdgeBoard.eb_idx == eb_idx).first()
-    if db_edge_board is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="EdgeBoard not found")
-    return db_edge_board
 
 
 # --- UPDATE (PUT) ---
@@ -105,3 +70,7 @@ async def delete_edge_board(
     db.delete(db_edge_board)
     db.commit()
     # 204 No Content 응답이므로 return 문이 없습니다.
+
+# 디버깅용
+    def __repr__(self):
+        return f"<EdgeBoard(eb_idx={self.eb_idx}, eb_name='{self.eb_name}')>"
