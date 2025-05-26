@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Filler } from 'chart.js';
-import { Doughnut, Line, Bar } from 'react-chartjs-2'; // Bar 임포트 추가 (DailyAverageChartCard용)
+import { Doughnut, Line, Bar } from 'react-chartjs-2';
 
-// 컴포넌트 Import (경로를 실제 프로젝트 구조에 맞게 확인하세요)
+// 컴포넌트 Import
 import DataCard from '../components/dashboard/DataCard';
 import TimeSeriesChartCard from '../components/dashboard/TimeSeriesChartCard';
 import DailyAverageChartCard from '../components/dashboard/DailyAverageChartCard';
+import TempHumidityTextCard from '../components/dashboard/TempHumidityTextCard'; // <<--- 새로 추가된 컴포넌트 import
+import ComfortStatusCard from '../components/dashboard/ComfortStatusCard'; // <<--- 새로 추가
 
 // Chart.js 모듈 전역 등록
 ChartJS.register(
@@ -14,45 +16,40 @@ ChartJS.register(
 
 // --- Helper 함수, 초기 상태 정의 (컴포넌트 함수 바깥) ---
 
-// CSS 변수에서 실제 색상 값을 가져오는 헬퍼 함수
 const getCssVariable = (name) => {
-  if (typeof document !== 'undefined') { // 브라우저 환경인지 확인
+  if (typeof document !== 'undefined') {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
-  return ''; // 또는 기본값 반환
+  return '';
 };
 
-// AQI 값에 따른 색상 결정 헬퍼 함수
 const getAqiColor = (aqiValue) => {
-    if (aqiValue <= 50) return getCssVariable('--aqi-good') || '#2ecc71'; // 기본값 추가
+    if (aqiValue <= 50) return getCssVariable('--aqi-good') || '#2ecc71';
     if (aqiValue <= 100) return getCssVariable('--aqi-moderate') || '#f1c40f';
     if (aqiValue <= 150) return getCssVariable('--aqi-unhealthy-sensitive') || '#e67e22';
     if (aqiValue <= 200) return getCssVariable('--aqi-unhealthy') || '#e74c3c';
     return getCssVariable('--aqi-very-unhealthy') || '#c0392b';
 };
 
-// AQI 계산 로직 (주의: 매우 기본적인 예시입니다. 실제 환경부 기준에 맞게 수정 필요)
 const calculateAqi = (pm25) => {
-  if (pm25 === undefined || pm25 === null || isNaN(pm25)) return { value: 0, status: '데이터 없음' };
+  if (pm25 === undefined || pm25 === null || isNaN(pm25)) return { value: 0, status_text: '데이터 없음' }; // status_text로 통일
   let value = 0;
-  let status = '좋음';
-  if (pm25 <= 15) { value = Math.round(pm25 * (50/15)); status = '좋음'; }
-  else if (pm25 <= 35) { value = Math.round(50 + (pm25 - 15) * (50/20)); status = '보통'; }
-  else if (pm25 <= 75) { value = Math.round(100 + (pm25 - 35) * (50/40)); status = '민감군주의'; }
-  else { value = Math.min(200, Math.round(150 + (pm25 - 75) * (50 / (200-75) ))); status = '나쁨'; } // AQI 최대값을 200으로 가정
-  return { value, status_text: status }; // status_text로 통일
+  let status_text = '좋음'; // status_text로 통일
+  if (pm25 <= 15) { value = Math.round(pm25 * (50/15)); status_text = '좋음'; }
+  else if (pm25 <= 35) { value = Math.round(50 + (pm25 - 15) * (50/20)); status_text = '보통'; }
+  else if (pm25 <= 75) { value = Math.round(100 + (pm25 - 35) * (50/40)); status_text = '민감군주의'; }
+  else { value = Math.min(200, Math.round(150 + (pm25 - 75) * (50 / (200-75) ))); status_text = '나쁨'; }
+  return { value, status_text };
 };
 
-
-// AQI 도넛 차트 데이터 및 옵션 생성 함수
 const getAqiChartData = (aqiValue = 0) => {
-  const value = Math.min(aqiValue, 200); // AQI 표시 최대값을 200으로 제한
+  const value = Math.min(aqiValue, 200);
   const aqiColor = getAqiColor(value);
   return {
     labels: ['AQI 값', '나머지'],
     datasets: [{
       label: '현재 종합 공기질',
-      data: [value, Math.max(0, 200 - value)], // AQI 최대값을 200으로 가정
+      data: [value, Math.max(0, 200 - value)],
       backgroundColor: [aqiColor, '#E0E0E0'],
       borderColor: [aqiColor, '#E0E0E0'],
       borderWidth: 1, circumference: 180, rotation: 270,
@@ -77,7 +74,6 @@ const getAqiChartOptions = (aqiValue = 0, statusText = '-') => {
   };
 };
 
-// 도넛 차트 중앙 텍스트 플러그인
 const doughnutTextPlugin = {
   id: 'doughnutTextPlugin',
   afterDraw(chart) {
@@ -104,12 +100,11 @@ const doughnutTextPlugin = {
 };
 ChartJS.register(doughnutTextPlugin);
 
-// 미니 라인 차트 데이터 생성 함수
 const createMiniLineData = (historicalData = [], colorVar, label) => {
   const MAX_POINTS = 20;
   const recentData = historicalData.slice(-MAX_POINTS);
   const labels = recentData.map((_, index) => index + 1);
-  const color = getCssVariable(colorVar) || '#000000'; // 기본 검정색
+  const color = getCssVariable(colorVar) || '#000000';
 
   return {
     labels: labels,
@@ -117,7 +112,7 @@ const createMiniLineData = (historicalData = [], colorVar, label) => {
       label: label,
       data: recentData.map(d => d.value),
       borderColor: color,
-      backgroundColor: `${color}1A`, // 기본 투명도 적용
+      backgroundColor: `${color}1A`,
       fill: true, tension: 0.4, borderWidth: 1,
       pointRadius: 0, pointHoverRadius: 0
     }],
@@ -132,7 +127,6 @@ const smallLineChartOptions = {
   animation: { duration: 200 }
 };
 
-// --- 목업 데이터 (시간별/일별 차트용) ---
 const initialTimeSeriesData = {
   labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
   datasets: [
@@ -140,15 +134,15 @@ const initialTimeSeriesData = {
       label: 'PM2.5',
       data: [12, 13, 15, 18, 22, 25, 23, 20, 18, 20, 24, 28, 30, 27, 25, 22, 24, 28, 32, 30, 26, 22, 18, 15],
       borderColor: getCssVariable('--color-pm25') || '#3498db',
-      backgroundColor: (getCssVariable('--color-pm25') || '#3498db') + '0D', // 투명도 약하게
+      backgroundColor: (getCssVariable('--color-pm25') || '#3498db') + '0D',
       fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3,
       pointBackgroundColor: getCssVariable('--color-pm25') || '#3498db',
       pointBorderColor: 'rgba(255,255,255,0.8)', pointHoverRadius: 5
     },
     {
-      label: 'PM10', // PM1.0 대신 PM10으로 통일 (일반적으로 더 많이 사용)
+      label: 'PM10',
       data: [20, 22, 25, 28, 30, 33, 31, 28, 25, 28, 32, 35, 38, 35, 33, 30, 32, 36, 40, 38, 33, 28, 24, 20],
-      borderColor: getCssVariable('--color-pm10') || '#f39c12', // PM10 색상 (CSS 변수 또는 기본값)
+      borderColor: getCssVariable('--color-pm10') || '#f39c12',
       backgroundColor: (getCssVariable('--color-pm10') || '#f39c12') + '0D',
       fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3,
       pointBackgroundColor: getCssVariable('--color-pm10') || '#f39c12',
@@ -202,16 +196,13 @@ const dailyAverageChartOptions = {
     layout: { padding: { bottom: 10, left:10, right:10, top:10 } }
 };
 
-// 알림 Mock 데이터
 const mockDashboardNotifications = [
   { a_idx: 1, a_date: new Date(Date.now() - 300000).toISOString(), a_message: '클린룸 A-1 PM2.5 수치 경고 (55µg/m³). 확인 바랍니다.', a_type: 'error', is_read: false, device_identifier: 'FAB1-RPi-001' },
   { a_idx: 2, a_date: new Date(Date.now() - 1800000).toISOString(), a_message: '공조 장치 #FAN-001이(가) 수동으로 꺼졌습니다.', a_type: 'warning', is_read: false, device_identifier: 'hvac-fan-001' },
 ];
 const formatNotificationTime = (isoString) => { if (!isoString) return '-'; try { return new Date(isoString).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:true });} catch(e){return '시간오류';}};
 
-// --- API Service ---
-const API_BASE_URL = 'http://192.168.219.193:8000';
-const SENSOR_ID_FOR_DASHBOARD = 1;
+const API_BASE_URL = 'http://192.168.219.193:8000'; // 실제 API 주소로 변경 필요
 
 const getLatestSensorDataAPI = async (seIdx) => {
   try {
@@ -227,25 +218,55 @@ const getLatestSensorDataAPI = async (seIdx) => {
     return result.data;
   } catch (error) {
     console.error("Failed to fetch sensor data:", error);
-    // throw error; // 필요에 따라 에러를 다시 throw 할 수 있음
-    return null; // API 호출 실패 시 null 반환하여 UI가 깨지는 것을 방지
+    return null;
+  }
+};
+
+// DashboardPage.jsx 파일 상단 또는 헬퍼 함수 영역에 추가
+
+const calculateComfortStatus = (sensorData) => {
+  const { temp, humidity, pm25, pm10 } = sensorData;
+
+  // 모든 값이 유효한 숫자인지 확인 (API 응답이 null/undefined일 수 있음)
+  if (
+    typeof temp !== 'number' || isNaN(temp) ||
+    typeof humidity !== 'number' || isNaN(humidity) ||
+    typeof pm25 !== 'number' || isNaN(pm25) ||
+    typeof pm10 !== 'number' || isNaN(pm10)
+  ) {
+    return '데이터 부족'; // 또는 '계산 불가' 등
+  }
+
+  const isTempComfortable = temp >= 21 && temp <= 26;
+  const isHumidityComfortable = humidity >= 35 && humidity <= 60;
+  const isPm25Comfortable = pm25 < 15;
+  const isPm10Comfortable = pm10 < 30;
+
+  if (isTempComfortable && isHumidityComfortable && isPm25Comfortable && isPm10Comfortable) {
+    return '쾌적';
+  } else {
+    return '혼잡'; // "쾌적하지 않음"을 의미
   }
 };
 
 
-// --- DashboardPage 컴포넌트 ---
+
+
+
+
+
+
 function DashboardPage({ userRole, currentUser }) {
   const [currentSensorData, setCurrentSensorData] = useState({
     pm25: 0, pm10: 0, temp: 0, humidity: 0,
   });
   const [aqiInfo, setAqiInfo] = useState({ value: 0, status_text: '로딩중...' });
-
+  const [comfortStatus, setComfortStatus] = useState('계산중...'); // <<--- 새로 추가
   const [pm25History, setPm25History] = useState([]);
   const [pm10History, setPm10History] = useState([]);
-  const [tempHistory, setTempHistory] = useState([]);
-  const [humidityHistory, setHumidityHistory] = useState([]);
+  // const [tempHistory, setTempHistory] = useState([]);       // 주석 처리: TempHumidityTextCard는 이력 차트 사용 안 함
+  // const [humidityHistory, setHumidityHistory] = useState([]); // 주석 처리: TempHumidityTextCard는 이력 차트 사용 안 함
 
-  // 시간별/일별 차트 상태: 정의된 목업 데이터로 초기화
   const [timeSeriesData, setTimeSeriesData] = useState(initialTimeSeriesData);
   const [dailyAverageData, setDailyAverageData] = useState(initialDailyAverageData);
 
@@ -253,15 +274,14 @@ function DashboardPage({ userRole, currentUser }) {
   const [notifications, setNotifications] = useState([]);
   const notificationPanelRef = useRef(null);
 
-  const MAX_HISTORY_LENGTH = 30;
+  const MAX_HISTORY_LENGTH = 30; // PM2.5, PM10 히스토리에만 사용됨
 
-  // useEffect 1: 주기적인 API 데이터 가져오기 및 초기 API 호출
   useEffect(() => {
     const fetchDataAndUpdateDashboard = async () => {
       try {
         const [thData, pmData] = await Promise.all([
-          getLatestSensorDataAPI(1), // 온습도
-          getLatestSensorDataAPI(2)  // 미세먼지
+          getLatestSensorDataAPI(1),
+          getLatestSensorDataAPI(2)
         ]);
 
         const temp = thData?.temp ?? 0;
@@ -269,7 +289,18 @@ function DashboardPage({ userRole, currentUser }) {
         const pm10 = pmData?.pm10 ?? 0;
         const pm25 = pmData?.pm25 ?? 0;
 
-        setCurrentSensorData({ temp, humidity, pm10, pm25 });
+        const newSensorData = { temp, humidity, pm10, pm25 };
+        setCurrentSensorData(newSensorData); // 센서 데이터 상태 업데이트
+
+                // --- 쾌적 상태 계산 및 업데이트 추가 ---
+        const currentComfortStatus = calculateComfortStatus(newSensorData);
+        setComfortStatus(currentComfortStatus);
+        // ------------------------------------
+
+
+
+
+
 
         const calculatedAqi = calculateAqi(pm25);
         setAqiInfo({
@@ -280,12 +311,14 @@ function DashboardPage({ userRole, currentUser }) {
         const now = new Date();
         setPm25History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm25, time: now }]);
         setPm10History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm10, time: now }]);
-        setTempHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: temp, time: now }]);
-        setHumidityHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: humidity, time: now }]);
+        // Temp/Humidity history 상태 업데이트 로직은 더 이상 필요 없음
+        // setTempHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: temp, time: now }]);
+        // setHumidityHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: humidity, time: now }]);
 
       } catch (error) {
         console.error("Error in fetchDataAndUpdateDashboard:", error);
         setAqiInfo({ value: 0, status_text: '오류' });
+        setComfortStatus('오류'); // 오류 발생 시 쾌적 상태도 오류로 표시
       }
     };
 
@@ -294,8 +327,6 @@ function DashboardPage({ userRole, currentUser }) {
     return () => clearInterval(intervalId);
   }, []);
 
-
-  // useEffect 2: 목업 알림 데이터 로드
   useEffect(() => {
     const loadInitialNotifications = () => {
       const formattedMockNotifications = mockDashboardNotifications.map(n => ({ ...n, displayTime: formatNotificationTime(n.a_date) }));
@@ -304,7 +335,6 @@ function DashboardPage({ userRole, currentUser }) {
     loadInitialNotifications();
   }, []);
 
-  // 알림 패널 외부 클릭 시 닫기
   useEffect(() => {
     function handleClickOutside(event) {
       if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target)) {
@@ -315,21 +345,19 @@ function DashboardPage({ userRole, currentUser }) {
     return () => { document.removeEventListener('mousedown', handleClickOutside); };
   }, [showNotifications]);
 
-
   const toggleNotifications = () => setShowNotifications(prev => !prev);
   const handleNotificationClick = async (notification_a_idx) => {
     setNotifications(prev => prev.map(n => n.a_idx === notification_a_idx ? { ...n, is_read: true } : n));
-    // 실제 API 호출: await markNotificationAsReadAPI(notification_a_idx);
   };
 
-  // 차트 데이터 준비
   const currentAqiChartData = getAqiChartData(aqiInfo.value);
   const currentAqiChartOptions = getAqiChartOptions(aqiInfo.value, aqiInfo.status_text);
 
   const pm25MiniLineData = createMiniLineData(pm25History, '--color-pm25', 'PM2.5');
-  const pm10MiniLineData = createMiniLineData(pm10History, '--color-pm10', 'PM10'); // --color-pm10 CSS 변수 필요
-  const tempMiniLineData = createMiniLineData(tempHistory, '--color-temp', '온도');
-  const humidityMiniLineData = createMiniLineData(humidityHistory, '--color-humidity', '습도');
+  const pm10MiniLineData = createMiniLineData(pm10History, '--color-pm10', 'PM10');
+  // tempMiniLineData와 humidityMiniLineData는 더 이상 사용하지 않으므로 주석 처리
+  // const tempMiniLineData = createMiniLineData(tempHistory, '--color-temp', '온도');
+  // const humidityMiniLineData = createMiniLineData(humidityHistory, '--color-humidity', '습도');
 
   return (
     <div className="dashboard-page-content">
@@ -374,22 +402,28 @@ function DashboardPage({ userRole, currentUser }) {
           <DataCard title="현재 종합 공기질 (AQI)" ChartComponent={Doughnut} chartData={currentAqiChartData} chartOptions={currentAqiChartOptions} chartPlugins={[doughnutTextPlugin]} isAQI={true} />
           <DataCard title="초미세먼지 (PM2.5)" value={currentSensorData.pm25.toFixed(1)} unit="µg/m³" ChartComponent={Line} chartData={pm25MiniLineData} chartOptions={smallLineChartOptions} />
           <DataCard title="미세먼지 (PM10)" value={currentSensorData.pm10.toFixed(1)} unit="µg/m³" ChartComponent={Line} chartData={pm10MiniLineData} chartOptions={smallLineChartOptions} />
-          <DataCard title="온도" value={currentSensorData.temp.toFixed(1)} unit="°C" ChartComponent={Line} chartData={tempMiniLineData} chartOptions={smallLineChartOptions} />
-          <DataCard title="습도" value={currentSensorData.humidity.toFixed(0)} unit="%" ChartComponent={Line} chartData={humidityMiniLineData} chartOptions={smallLineChartOptions} />
+
+          {/* 기존 온도, 습도 DataCard 삭제됨 */}
+          <TempHumidityTextCard
+            temp={currentSensorData.temp}
+            humidity={currentSensorData.humidity}
+          />
+          {/* 새로 추가된 쾌적 상태 카드 */}
+          <ComfortStatusCard status={comfortStatus} />
         </div>
 
         <div className="bottom-charts-row">
           <div className="left-large-chart-container card air-quality-trend-card">
             <TimeSeriesChartCard
               title="시간별 미세먼지 변화"
-              chartData={timeSeriesData}
+              chartData={timeSeriesData} // 현재 목업 데이터 사용
               chartOptions={timeSeriesChartOptions}
             />
           </div>
           <div className="right-column-container card daily-air-quality-summary-card">
             <DailyAverageChartCard
               title="일별 환경 지표 요약"
-              chartData={dailyAverageData} // Bar 차트 사용 시 DailyAverageChartCard 내부에서 <Bar> 컴포넌트 사용
+              chartData={dailyAverageData} // 현재 목업 데이터 사용
               chartOptions={dailyAverageChartOptions}
             />
           </div>

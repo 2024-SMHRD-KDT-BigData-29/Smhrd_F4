@@ -2,17 +2,12 @@
 import React, { useState, useEffect } from 'react'; // useState import 확인!
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // React Router DOM import 확인!
 
-// 🔧 컴포넌트 (Sidebar 등)
-import Sidebar from "./components/dashboard/Sidebar";
-
-
-// 🔧 페이지 (화면 단위)
-import LoginPage from "./pages/LoginPage";
-import SignUpPage from "./pages/SignUpPage";
-import DashboardPage from "./pages/DashboardPage";
-import AnomalyHistoryPage from "./pages/AnomalyHistoryPage";
-import DeviceManagementPage from "./pages/DeviceManagementPage";
-import UserInfoPage from './pages/UserInfoPage';
+import Sidebar from './components/dashboard/Sidebar'; // Sidebar import 확인!
+import LoginPage from './pages/LoginPage'; // LoginPage import 확인!
+import SignUpPage from './pages/SignUpPage'; // SignUpPage import 추가
+import DashboardPage from './pages/DashboardPage'; // DashboardPage import 확인!
+import AnomalyHistoryPage from './pages/AnomalyHistoryPage'; // AnomalyHistoryPage import 확인!
+import DeviceManagementPage from './pages/DeviceManagementPage';
 
 import './App.css';
 
@@ -52,26 +47,19 @@ function App() {
       const token = localStorage.getItem('authToken');
       if (token) {
         try {
-          const res = await fetch("http://localhost:8000/api/auth/me", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (res.ok) {
-            const user = await res.json();
-            handleLogin("admin", user);  // 또는 user.role이 있으면 그걸 넣어도 됨
-          } else {
-            handleLogout();  // 유효하지 않은 토큰이면 강제 로그아웃
-          }
+          // const response = await fetchMeAPI(); // /api/auth/me 호출 (apiService.js에 정의)
+          // if (response.data && response.data.user) {
+          //   handleLogin(response.data.user.role, response.data.user);
+          // } else {
+          //   handleLogout(); // 유효하지 않은 토큰이면 강제 로그아웃
+          // }
         } catch (error) {
-          console.error("자동 로그인 실패:", error);
-          handleLogout(); // 네트워크 등 에러 시도 강제 로그아웃
+          // console.error('Auto login failed:', error);
+          // handleLogout(); // 에러 발생 시 강제 로그아웃
         }
       }
     };
-
-    attemptAutoLogin(); // ✅ 주석 해제해서 실행되게 만듦
+    // attemptAutoLogin(); // 실제 API 연동 시 주석 해제
   }, []);
 
 
@@ -88,7 +76,7 @@ function App() {
               {/* DashboardPage 등에도 currentUser 전달 가능 */}
               <Route path="/dashboard" element={<DashboardPage userRole={userRole} currentUser={currentUser} />} />
               <Route path="/anomaly-history" element={<AnomalyHistoryPage />} />
-              {userRole === 'admin' && (
+              { (
                 <Route path="/device-management" element={<DeviceManagementPage currentUser={currentUser} />} />
               )}
               <Route path="*" element={<Navigate replace to="/dashboard" />} />
@@ -100,7 +88,6 @@ function App() {
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLogin} />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="*" element={<Navigate replace to="/login" />} />
-          <Route path="/user-info" element={<UserInfoPage />} />
         </Routes>
       )}
     </Router>
