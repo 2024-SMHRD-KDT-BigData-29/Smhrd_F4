@@ -21,32 +21,28 @@ const AnomalyHistoryPage = ({ currentUser }) => { // currentUser prop 추가 (�
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-useEffect(() => {
-  const loadAnomalyHistory = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/alert`);
-      const data = await response.json();
+  useEffect(() => {
+    const loadAnomalyHistory = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // const response = await fetchAnomalyHistoryAPI();
+        // const data = response.data || [];
+        const data = mockAnomalyHistoryData; // Mock 데이터 사용
 
-      const formatted = data.map(item => ({
-        ...item,
-        display_a_date: formatDisplayDateTime(item.a_date),
-        device_identifier: "공조장비 #1",
-        a_message: `${item.a_type} 발생 (${item.a_date})`,
-        status_처리상태: "확인 필요",
-        is_read: false
-      }));
+        const formattedData = data.map(item => ({ ...item, display_a_date: formatDisplayDateTime(item.a_date) }));
+        setAnomalies(formattedData);
+      } catch (err) {
+        console.error("Error fetching anomaly history:", err);
+        setError("이상 이력 정보를 불러오는 데 실패했습니다.");
+        setAnomalies([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadAnomalyHistory();
+  }, []);
 
-      setAnomalies(formatted);
-    } catch (e) {
-      setError("이상 이력 불러오기 실패");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  loadAnomalyHistory();
-}, []);
   if (isLoading) return <div className="loading-message" style={{ padding: '20px', textAlign: 'center' }}>로딩 중...</div>;
   if (error) return <div className="error-message" style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>;
 
