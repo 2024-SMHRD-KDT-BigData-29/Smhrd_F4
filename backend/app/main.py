@@ -36,7 +36,7 @@ app.include_router(edge_board.router)
 app.include_router(hvac.router, tags=["HVAC"])
 app.include_router(control.router)
 app.include_router(alert.router)
-app.include_router(power.router)
+app.include_router(power.router, prefix="/api/power")
 
 
 @app.get("/")

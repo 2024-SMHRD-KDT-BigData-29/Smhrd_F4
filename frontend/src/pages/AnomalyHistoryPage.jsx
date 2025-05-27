@@ -24,24 +24,28 @@ const AnomalyHistoryPage = ({ currentUser }) => { // currentUser prop 추가 (�
   useEffect(() => {
     const loadAnomalyHistory = async () => {
       setIsLoading(true);
-      setError(null);
       try {
-        // const response = await fetchAnomalyHistoryAPI();
-        // const data = response.data || [];
-        const data = mockAnomalyHistoryData; // Mock 데이터 사용
-
-        const formattedData = data.map(item => ({ ...item, display_a_date: formatDisplayDateTime(item.a_date) }));
+        const response = await fetch("http://localhost:8000/api/alert/anomalies");
+        if (!response.ok) throw new Error("API 요청 실패");
+        const data = await response.json();
+        const formattedData = data.map(item => ({
+          ...item,
+          display_a_date: formatDisplayDateTime(item.a_date),
+          status_처리상태: item.is_read ? "조치 완료" : "확인 필요",
+          device_identifier: item.he_name
+        }));
         setAnomalies(formattedData);
       } catch (err) {
-        console.error("Error fetching anomaly history:", err);
         setError("이상 이력 정보를 불러오는 데 실패했습니다.");
-        setAnomalies([]);
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
+
     loadAnomalyHistory();
   }, []);
+
 
   if (isLoading) return <div className="loading-message" style={{ padding: '20px', textAlign: 'center' }}>로딩 중...</div>;
   if (error) return <div className="error-message" style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>;

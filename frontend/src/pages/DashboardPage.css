@@ -1,0 +1,41 @@
+/* 유형별 알림 색상 */
+.notification-item.type-온도이상 .notification-message {
+  color: #e74c3c;
+}
+.notification-item.type-습도이상 .notification-message {
+  color: #3498db;
+}
+.notification-item.type-pm10이상 .notification-message {
+  color: #f39c12;
+}
+.notification-item.type-pm25이상 .notification-message {
+  color: #9b59b6;
+}
+
+/* 알림 텍스트 */
+.notification-message {
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 알림 시간 */
+.notification-time {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 확인 버튼 */
+.notification-item button {
+  background-color: #eee;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 읽음 알림 흐리게 */
+.notification-item.read {
+  opacity: 0.6;
+}

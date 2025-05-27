@@ -8,6 +8,9 @@ import TimeSeriesChartCard from '../components/dashboard/TimeSeriesChartCard';
 import DailyAverageChartCard from '../components/dashboard/DailyAverageChartCard';
 import TempHumidityTextCard from '../components/dashboard/TempHumidityTextCard'; // <<--- 새로 추가된 컴포넌트 import
 import ComfortStatusCard from '../components/dashboard/ComfortStatusCard'; // <<--- 새로 추가
+import AlertHistoryCard from '../components/dashboard/AlertHistoryCard';
+
+import './DashboardPage.css';
 
 // Chart.js 모듈 전역 등록
 ChartJS.register(
@@ -22,6 +25,8 @@ const getCssVariable = (name) => {
   }
   return '';
 };
+
+
 
 const getAqiColor = (aqiValue) => {
     if (aqiValue <= 50) return getCssVariable('--aqi-good') || '#2ecc71';
@@ -196,6 +201,27 @@ const dailyAverageChartOptions = {
     layout: { padding: { bottom: 10, left:10, right:10, top:10 } }
 };
 
+// 알림 목록 API 호출
+const fetchAlertHistory = async () => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/alert/history`);
+    if (!res.ok) throw new Error('Failed to fetch alert history');
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+};
+
+const markAlertAsRead = async (a_idx) => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/alert/${a_idx}/read`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to mark alert as read');
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 const mockDashboardNotifications = [
   { a_idx: 1, a_date: new Date(Date.now() - 300000).toISOString(), a_message: '클린룸 A-1 PM2.5 수치 경고 (55µg/m³). 확인 바랍니다.', a_type: 'error', is_read: false, device_identifier: 'FAB1-RPi-001' },
   { a_idx: 2, a_date: new Date(Date.now() - 1800000).toISOString(), a_message: '공조 장치 #FAN-001이(가) 수동으로 꺼졌습니다.', a_type: 'warning', is_read: false, device_identifier: 'hvac-fan-001' },
@@ -282,17 +308,11 @@ const calculateComfortStatus = (sensorData) => {
   }
 };
 
-
-
-
-
-
-
-
 function DashboardPage({ userRole, currentUser }) {
   const [currentSensorData, setCurrentSensorData] = useState({
     pm25: 0, pm10: 0, temp: 0, humidity: 0,
   });
+  const [selectedDeviceId, setSelectedDeviceId] = useState(1);
   const [aqiInfo, setAqiInfo] = useState({ value: 0, status_text: '로딩중...' });
   const [comfortStatus, setComfortStatus] = useState('계산중...'); // <<--- 새로 추가
   const [pm25History, setPm25History] = useState([]);
@@ -334,12 +354,65 @@ function DashboardPage({ userRole, currentUser }) {
 
 
   // const [dailyAverageData, setDailyAverageData] = useState(initialDailyAverageData);
-
+  const [alerts, setAlerts] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState(false);
   const notificationPanelRef = useRef(null);
 
+
+
+
   const MAX_HISTORY_LENGTH = 30; // PM2.5, PM10 히스토리에만 사용됨
+
+  // useEffect에서 알림 데이터 로드
+  useEffect(() => {
+    const loadAlerts = async () => {
+      const data = await fetchAlertHistory();
+      const formatted = data.map(n => ({
+        ...n,
+        displayTime: new Date(n.a_date).toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        safeType: n.a_type.replace(/\./g, '').replace(/\s/g, '') // 예: "pm2.5이상" → "pm25이상"
+      }));
+      setAlerts(formatted);
+    };
+    loadAlerts();
+    const interval = setInterval(loadAlerts, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAlertClick = async (a_idx) => {
+    await markAlertAsRead(a_idx);
+    setAlerts(prev =>
+      prev.map(alert =>
+        alert.a_idx === a_idx ? { ...alert, is_read: true } : alert
+      )
+    );
+  };
+
+  // AlertHistoryCard 사용
+  <AlertHistoryCard
+    title="최근 알림 이력"
+    alerts={alerts}
+    onConfirm={handleAlertClick}
+  />
+
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notificationPanelRef.current && !notificationPanelRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
+
 
   useEffect(() => {
     const fetchDataAndUpdateDashboard = async () => {
@@ -504,7 +577,19 @@ function DashboardPage({ userRole, currentUser }) {
 
   const toggleNotifications = () => setShowNotifications(prev => !prev);
   const handleNotificationClick = async (notification_a_idx) => {
-    setNotifications(prev => prev.map(n => n.a_idx === notification_a_idx ? { ...n, is_read: true } : n));
+    try {
+      await fetch(`${API_BASE_URL}/api/alert/${notification_a_idx}/read`, {
+        method: 'POST'
+      });
+
+      setNotifications(prev =>
+        prev.map(n =>
+          n.a_idx === notification_a_idx ? { ...n, is_read: true } : n
+        )
+      );
+    } catch (error) {
+      console.error("알림 읽음 처리 실패:", error);
+    }
   };
 
   const currentAqiChartData = getAqiChartData(aqiInfo.value);
@@ -521,38 +606,86 @@ function DashboardPage({ userRole, currentUser }) {
       <header className="main-header">
         <div className="header-title-section">
           <h2>공장 공기질 요약</h2>
-          {currentUser && currentUser.m_name &&
-            <span style={{marginLeft: '15px', fontSize: '0.95em', color: 'var(--text-secondary)'}}>
+          {currentUser?.m_name && (
+            <span style={{ marginLeft: '15px', fontSize: '0.95em', color: 'var(--text-secondary)' }}>
               (안녕하세요, {currentUser.m_name}님)
             </span>
-          }
+          )}
+
+          {/* ✅ 공정 선택 드롭다운 추가 */}
+          <div className="device-selector-container">
+            <label htmlFor="device-select" className="device-selector-label">공정 선택:</label>
+            <select
+              id="device-select"
+              value={selectedDeviceId}
+              onChange={(e) => {
+                const newDeviceId = parseInt(e.target.value, 10);
+                if (selectedDeviceId !== newDeviceId) {
+                  setSelectedDeviceId(newDeviceId);
+                }
+              }}
+              className="device-selector-select"
+            >
+              <option value={1}>S1-MetaLab</option>
+              <option value={2}>S1-DataHub</option>
+              <option value={3}>S1-ControlRoom</option>
+              <option value={4}>S1-FactoryZone</option>
+              <option value={5}>S1-DeviceZone</option>
+            </select>
+          </div>
         </div>
+
         <div className="header-actions">
           <div className="notification-area">
-            <button onClick={toggleNotifications} className="notification-bell">
+            <button onClick={() => setShowNotifications(prev => !prev)} className="notification-bell">
               <i className="fas fa-bell"></i>
-              {notifications.filter(n => !n.is_read).length > 0 &&
-                <span className="notification-badge">{notifications.filter(n => !n.is_read).length}</span>
-              }
+              {alerts.filter(a => !a.is_read).length > 0 && (
+                <span className="notification-badge">
+                  {alerts.filter(a => !a.is_read).length}
+                </span>
+              )}
             </button>
+
             {showNotifications && (
               <div ref={notificationPanelRef} className="notification-panel">
-                <div className="notification-panel-header"><h4>알림 목록</h4></div>
-                {notifications.length > 0 ? (
+                <div className="notification-panel-header">
+                  <h4>알림 목록</h4>
+                </div>
+                {alerts.length === 0 ? (
+                  <p className="no-notifications">새로운 알림이 없습니다.</p>
+                ) : (
                   <ul>
-                    {notifications.map(notif => (
-                      <li key={notif.a_idx} className={`notification-item ${notif.is_read ? 'read' : 'unread'} type-${notif.a_type}`} onClick={() => handleNotificationClick(notif.a_idx)}>
-                        <p className="notification-message">{notif.a_message}</p>
-                        <span className="notification-time">{notif.displayTime}</span>
+                    {alerts.map(alert => (
+                      <li
+                        key={alert.a_idx}
+                        className={`notification-item ${alert.is_read ? 'read' : 'unread'} type-${alert.safeType}`}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <p className="notification-message">{alert.a_message}</p>
+                            <span className="notification-time">{alert.displayTime}</span>
+                          </div>
+                          {!alert.is_read && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAlertClick(alert.a_idx);
+                              }}
+                            >
+                              확인
+                            </button>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
-                ) : (<p className="no-notifications">새로운 알림이 없습니다.</p>)}
+                )}
               </div>
             )}
           </div>
         </div>
       </header>
+
 
       <main className="page-actual-content">
         <div className="dashboard-grid">

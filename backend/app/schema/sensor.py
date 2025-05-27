@@ -30,3 +30,11 @@ class SensorData(BaseModel):
 
     class Config:
         orm_mode = True
+
+class HourlyPmResponse(BaseModel):
+    timestamp: datetime
+    pm10: Optional[float] = None
+    pm25: Optional[float] = None
+
+    class Config:
+        from_attributes = True

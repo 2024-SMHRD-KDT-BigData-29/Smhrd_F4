@@ -1,11 +1,13 @@
-// src/components/dashboard/AlertHistoryCard.js
+// src/components/dashboard/AlertHistoryCard.jsx
 import React from 'react';
+import './AlertHistoryCard.css'; // ✅ css 연결
 
-// 스타일 객체 (DashboardPage.js의 alertHistoryCard 스타일과 유사하게)
+
+
 const styles = {
   alertHistoryCard: {
     backgroundColor: 'white',
-    padding: '20px', // 다른 카드들과 패딩 일관성 유지
+    padding: '20px',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     flex: 1,
@@ -29,24 +31,32 @@ const styles = {
   }
 };
 
-// 가짜 이력 데이터 (나중에는 props로 받거나 API 호출)
-const dummyAlerts = [
-  { time: '2025-05-14 10:53:', message: '클린룸 A-1 PM1.0 농도 급상승' },
-  { time: '2025-05-14 09:30:', message: '메인 공정라인 온도 설정치 초과' },
-  { time: '2025-05-13 17:45:', message: 'FAB-2 습도 비정상 감지' },
-];
-
-function AlertHistoryCard({ title, alerts = dummyAlerts }) { // alerts prop 기본값으로 더미 데이터 사용
+function AlertHistoryCard({ title, alerts, onConfirm }) {
   return (
     <div style={styles.alertHistoryCard}>
       {title && <h3 style={styles.cardTitle}>{title}</h3>}
       <ul style={styles.list}>
-        {alerts.map((alert, index) => (
-          <li key={index}>
-            <span style={styles.listItemTime}>{alert.time}</span>
-            {alert.message}
-          </li>
-        ))}
+        {alerts.length === 0 ? (
+          <li>최근 알림이 없습니다.</li>
+        ) : (
+          alerts.map((alert) => (
+            <li key={alert.a_idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={styles.listItemTime}>
+                  {new Date(alert.a_date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <span>
+                  <strong>{alert.he_name}</strong>에서 {alert.a_type} 발생
+                </span>
+              </div>
+              {!alert.is_read && (
+                <button onClick={() => onConfirm(alert.a_idx)} style={{ fontSize: '12px', marginLeft: '10px' }}>
+                  확인
+                </button>
+              )}
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );

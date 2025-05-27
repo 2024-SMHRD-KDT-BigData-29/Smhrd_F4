@@ -1,21 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import redis
 import json
 
 from app.db.database import get_db
+from typing import List
 from app.model.alert_model import Alert
 from app.model.user_model import User
 from app.model.sensor_data_model import SensorData as SensorDataORM  # ORM용
 # User를 직접 만들기 위해 import
 from pydantic import BaseModel
+from app.schema.sensor import HourlyPmResponse
 
 router = APIRouter(prefix="/api/sensor", tags=["Sensor"])
 
 # Redis 연결
 r = redis.Redis(host="localhost", port=6379, db=0)
+
+# --- Schemas ---
+# sensor_schema.py 에서 필요한 스키마들을 가져옵니다.
+# 아래 SensorDataRequest는 이 파일에 정의된 것을 사용하거나, schema 파일에서 import 합니다.
+# 여기서는 schema 파일에서 모두 import 한다고 가정합니다.
 
 # ✅ 항상 admin으로 설정된 사용자 반환
 def get_current_user() -> User:
@@ -119,3 +126,32 @@ def get_latest_sensor_data(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"센서 데이터 조회 실패: {str(e)}")
+
+# ✅ 시간별 PM10/PM2.5 데이터 조회 API
+@router.get("/pm/hourly", response_model=List[HourlyPmResponse])
+def get_hourly_pm_data(
+    se_idx: int = Query(..., description="센서 ID"),
+    hours: int = Query(24, description="조회할 시간 범위 (1~48시간)", ge=1, le=48),
+    db: Session = Depends(get_db)
+):
+    try:
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=hours)
+
+        results = (
+            db.query(
+                SensorDataORM.created_at.label("timestamp"),
+                SensorDataORM.pm10,
+                SensorDataORM.pm25
+            )
+            .filter(
+                SensorDataORM.se_idx == se_idx,
+                SensorDataORM.created_at >= start_time,
+                SensorDataORM.created_at <= end_time
+            )
+            .order_by(SensorDataORM.created_at.asc())
+            .all()
+        )
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PM 데이터 조회 실패: {str(e)}")

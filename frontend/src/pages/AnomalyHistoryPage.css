@@ -79,3 +79,8 @@
 .action-button:hover {
   background-color: #0056b3;
 }
+
+.notification-item.type-온도이상 .notification-message { color: #e74c3c; }
+.notification-item.type-습도이상 .notification-message { color: #3498db; }
+.notification-item.type-pm10이상 .notification-message { color: #f39c12; }
+.notification-item.type-pm2_5이상 .notification-message { color: #9b59b6; }
