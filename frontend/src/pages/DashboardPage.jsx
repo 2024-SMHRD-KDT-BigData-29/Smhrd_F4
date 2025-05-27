@@ -202,7 +202,7 @@ const mockDashboardNotifications = [
 ];
 const formatNotificationTime = (isoString) => { if (!isoString) return '-'; try { return new Date(isoString).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:true });} catch(e){return '시간오류';}};
 
-const API_BASE_URL = 'http://192.168.219.193:8000'; // 실제 API 주소로 변경 필요
+const API_BASE_URL = 'http://127.0.0.1:8000'; // 실제 API 주소로 변경 필요
 
 const getLatestSensorDataAPI = async (seIdx) => {
   try {
@@ -221,6 +221,39 @@ const getLatestSensorDataAPI = async (seIdx) => {
     return null;
   }
 };
+// ▼▼▼ 시간별 PM 데이터 API 호출 함수 (새로 추가 또는 기존 위치) ▼▼▼
+const getHourlyPmDataAPI = async (sensorId, hours = 24) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/sensor/pm/hourly?se_idx=${sensorId}&hours=${hours}`);
+    if (!response.ok) {
+      throw new Error(`API Error for hourly PM data: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Failed to fetch hourly PM data:", error);
+    return [];
+  }
+};
+// --- ▲▲▲ API Service 종료 ---
+
+// ▼▼▼ 시간별 전력량 데이터 API 호출 함수 (새로 추가) ▼▼▼
+const getHourlyPowerConsumptionAPI = async (equipmentId, hours = 24) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/power/hourly_consumption?he_idx=${equipmentId}&hours=${hours}`);
+    if (!response.ok) {
+      throw new Error(`API Error for hourly power data: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Failed to fetch hourly power consumption data:", error);
+    return [];
+  }
+};
+// --- ▲▲▲ API Service 종료 ---
+
+
 
 // DashboardPage.jsx 파일 상단 또는 헬퍼 함수 영역에 추가
 
@@ -267,8 +300,40 @@ function DashboardPage({ userRole, currentUser }) {
   // const [tempHistory, setTempHistory] = useState([]);       // 주석 처리: TempHumidityTextCard는 이력 차트 사용 안 함
   // const [humidityHistory, setHumidityHistory] = useState([]); // 주석 처리: TempHumidityTextCard는 이력 차트 사용 안 함
 
-  const [timeSeriesData, setTimeSeriesData] = useState(initialTimeSeriesData);
-  const [dailyAverageData, setDailyAverageData] = useState(initialDailyAverageData);
+  // ▼▼▼ 시간별 미세먼지 차트 데이터 상태 ▼▼▼
+  const [timeSeriesData, setTimeSeriesData] = useState({
+    labels: [],
+    datasets: [
+      { label: 'PM2.5', data: [], borderColor: getCssVariable('--color-pm25') || '#3498db', backgroundColor: (getCssVariable('--color-pm25') || '#3498db') + '0D', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, pointBackgroundColor: getCssVariable('--color-pm25') || '#3498db', pointBorderColor: 'rgba(255,255,255,0.8)', pointHoverRadius: 5 },
+      { label: 'PM10', data: [], borderColor: getCssVariable('--color-pm10') || '#f39c12', backgroundColor: (getCssVariable('--color-pm10') || '#f39c12') + '0D', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, pointBackgroundColor: getCssVariable('--color-pm10') || '#f39c12', pointBorderColor: 'rgba(255,255,255,0.8)', pointHoverRadius: 5 }
+    ]
+  });
+  const [loadingTimeSeries, setLoadingTimeSeries] = useState(true);
+  // ▲▲▲ 시간별 미세먼지 차트 데이터 상태 ▲▲▲
+
+  // ▼▼▼ 시간별 전력량 차트 데이터 상태 추가 ▼▼▼
+  const [powerConsumptionData, setPowerConsumptionData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: '전력 사용량 (W)',
+        data: [],
+        borderColor: getCssVariable('--color-temp') || '#e74c3c', // 전력량에 맞는 색상으로 변경 추천
+        backgroundColor: (getCssVariable('--color-temp') || '#e74c3c') + '0D',
+        fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3,
+        pointBackgroundColor: getCssVariable('--color-temp') || '#e74c3c',
+        pointBorderColor: 'rgba(255,255,255,0.8)', pointHoverRadius: 5
+      },
+    ],
+  });
+  const [loadingPowerConsumption, setLoadingPowerConsumption] = useState(true);
+  // ▲▲▲ 시간별 전력량 차트 데이터 상태 추가 ▲▲▲
+
+
+
+
+
+  // const [dailyAverageData, setDailyAverageData] = useState(initialDailyAverageData);
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -278,11 +343,17 @@ function DashboardPage({ userRole, currentUser }) {
 
   useEffect(() => {
     const fetchDataAndUpdateDashboard = async () => {
+      console.log("fetchDataAndUpdateDashboard called");
       try {
         const [thData, pmData] = await Promise.all([
           getLatestSensorDataAPI(1),
           getLatestSensorDataAPI(2)
         ]);
+
+         // ▼▼▼ 데이터 확인 로그 추가 ▼▼▼
+        // console.log("API Response for se_idx=1 (TH Data):", thData);
+        // console.log("API Response for se_idx=2 (PM Data):", pmData);
+        // ▲▲▲ 데이터 확인 로그 추가 ▲▲▲
 
         const temp = thData?.temp ?? 0;
         const humidity = thData?.humidity ?? 0;
@@ -326,6 +397,92 @@ function DashboardPage({ userRole, currentUser }) {
     const intervalId = setInterval(fetchDataAndUpdateDashboard, 5000);
     return () => clearInterval(intervalId);
   }, []);
+
+   // ▼▼▼ useEffect 2: 시간별 미세먼지 차트 데이터 로드 (컴포넌트 마운트 시 1회) ▼▼▼
+  useEffect(() => {
+    const fetchTimeSeriesPmData = async () => {
+      setLoadingTimeSeries(true);
+      const pmSensorId = 2; // 실제 PM 센서의 se_idx로 변경 필요
+      const hoursToFetch = 24;
+      console.log("Fetching hourly PM data for chart...");
+      const hourlyData = await getHourlyPmDataAPI(pmSensorId, hoursToFetch);
+      console.log("API Response for hourly PM data (se_idx=2):", hourlyData);
+      if (hourlyData && hourlyData.length > 0) {
+        const labels = hourlyData.map(item => {
+          const date = new Date(item.timestamp);
+          return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        });
+        const pm25Values = hourlyData.map(item => item.pm25);
+        const pm10Values = hourlyData.map(item => item.pm10);
+
+        setTimeSeriesData(prevData => ({
+          labels: labels,
+          datasets: [
+            { ...prevData.datasets[0], data: pm25Values },
+            { ...prevData.datasets[1], data: pm10Values }
+          ]
+        }));
+      } else {
+        console.warn(`No hourly PM data for se_idx=${pmSensorId}, or an error occurred. Resetting chart.`);
+        setTimeSeriesData({ // 데이터 없을 시 차트 초기화
+            labels: [],
+            datasets: [
+                { ...timeSeriesData.datasets[0], data: [] }, // 기존 스타일 유지를 위해 ...initialTimeSeriesData.datasets[0] 대신 사용
+                { ...timeSeriesData.datasets[1], data: [] }
+            ]
+        });
+      }
+      setLoadingTimeSeries(false);
+    };
+
+    fetchTimeSeriesPmData();
+    // 필요시 주기적 업데이트 로직 추가
+    // const chartIntervalId = setInterval(fetchTimeSeriesPmData, 3600000); // 예: 1시간마다
+    // return () => clearInterval(chartIntervalId);
+  }, []); // timeSeriesData.datasets를 의존성 배열에 추가하여 초기값 구조 유지
+  // ▲▲▲ useEffect 2 종료 ▲▲▲
+
+ // ▼▼▼ useEffect 3: 시간별 전력량 차트 데이터 로드 (새로 추가) ▼▼▼
+  useEffect(() => {
+    const fetchHourlyPowerData = async () => {
+      setLoadingPowerConsumption(true);
+      const targetHeIdxForPower = 1; // TODO: 실제 전력량 조회할 장비의 he_idx로 변경
+      const hoursToFetch = 24;
+
+      console.log(`Workspaceing hourly power data for he_idx=${targetHeIdxForPower}...`);
+      const hourlyPowerData = await getHourlyPowerConsumptionAPI(targetHeIdxForPower, hoursToFetch);
+      console.log(`API Response for hourly power data (he_idx=${targetHeIdxForPower}):`, hourlyPowerData);
+
+      if (hourlyPowerData && hourlyPowerData.length > 0) {
+        const labels = hourlyPowerData.map(item => {
+          const date = new Date(item.timestamp); // API 응답의 timestamp (p_data)
+          return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        });
+        const wattageValues = hourlyPowerData.map(item => item.wattage); // API 응답의 wattage (p_power)
+
+        setPowerConsumptionData(prevData => ({
+          labels: labels,
+          datasets: [
+            { ...prevData.datasets[0], data: wattageValues },
+          ],
+        }));
+      } else {
+        console.warn(`No hourly power data for he_idx=${targetHeIdxForPower}, or an error occurred. Resetting chart.`);
+        setPowerConsumptionData(prevData => ({
+            labels: [],
+            datasets: [ { ...prevData.datasets[0], data: [] } ]
+        }));
+      }
+      setLoadingPowerConsumption(false);
+    };
+
+    fetchHourlyPowerData();
+  }, []); // 컴포넌트 마운트 시 1회 실행
+  // --- ▲▲▲ useEffect 3 종료 ---
+
+
+
+
 
   useEffect(() => {
     const loadInitialNotifications = () => {
@@ -412,21 +569,35 @@ function DashboardPage({ userRole, currentUser }) {
           <ComfortStatusCard status={comfortStatus} />
         </div>
 
-        <div className="bottom-charts-row">
+       <div className="bottom-charts-row">
           <div className="left-large-chart-container card air-quality-trend-card">
-            <TimeSeriesChartCard
-              title="시간별 미세먼지 변화"
-              chartData={timeSeriesData} // 현재 목업 데이터 사용
-              chartOptions={timeSeriesChartOptions}
-            />
+            {loadingTimeSeries ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '250px' }}> {/* 차트 높이와 유사하게 */}
+                <p>시간별 미세먼지 데이터 로딩 중...</p>
+              </div>
+            ) : (
+              <TimeSeriesChartCard
+                title="시간별 미세먼지 변화"
+                chartData={timeSeriesData}
+                chartOptions={timeSeriesChartOptions}
+              />
+            )}
           </div>
-          <div className="right-column-container card daily-air-quality-summary-card">
-            <DailyAverageChartCard
-              title="일별 환경 지표 요약"
-              chartData={dailyAverageData} // 현재 목업 데이터 사용
-              chartOptions={dailyAverageChartOptions}
-            />
+           {/* ▼▼▼ 기존 DailyAverageChartCard를 전력량 차트로 교체 ▼▼▼ */}
+          <div className="right-column-container card power-consumption-trend-card"> {/* 클래스명 예시 */}
+            {loadingPowerConsumption ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '250px' }}>
+                <p>시간별 전력 사용량 데이터 로딩 중...</p>
+              </div>
+            ) : (
+              <TimeSeriesChartCard // TimeSeriesChartCard 재사용 (선 그래프이므로)
+                title="시간별 전력 사용량 (W)" // 제목 변경
+                chartData={powerConsumptionData} // 새로운 데이터 상태 사용
+                chartOptions={timeSeriesChartOptions} // 필요시 전력량 전용 옵션 객체 사용
+              />
+            )}
           </div>
+          {/* ▲▲▲ 전력량 차트로 교체 완료 ▲▲▲ */}
         </div>
       </main>
     </div>

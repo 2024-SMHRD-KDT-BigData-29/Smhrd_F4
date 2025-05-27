@@ -9,12 +9,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.db.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert  # 상대경로 아님에 주의!
+from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert, power  # 상대경로 아님에 주의!
 
 # SQLAlchemy
 from app.model.sensor_equip_model import SensorEquip  # ✅ 이 줄 추가
 from app.model.sensor_data_model import SensorData
 from app.model.edge_board_model import EdgeBoard
+from app.model.power_data_model import PowerData
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Worklean API")
@@ -35,6 +36,7 @@ app.include_router(edge_board.router)
 app.include_router(hvac.router, tags=["HVAC"])
 app.include_router(control.router)
 app.include_router(alert.router)
+app.include_router(power.router)
 
 
 @app.get("/")
