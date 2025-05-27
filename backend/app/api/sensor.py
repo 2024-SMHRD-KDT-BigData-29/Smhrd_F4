@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime, timedelta
 import redis
 import json
@@ -13,7 +13,7 @@ from app.model.user_model import User
 from app.model.sensor_data_model import SensorData as SensorDataORM  # ORM용
 # User를 직접 만들기 위해 import
 from pydantic import BaseModel
-from app.schema.sensor import HourlyPmResponse
+from app.schema.sensor import HourlyPmResponse, SensorDataResponse
 
 router = APIRouter(prefix="/api/sensor", tags=["Sensor"])
 
@@ -67,31 +67,52 @@ class SensorDataRequest(BaseModel):
     pm25: Optional[float] = None
     outlier: Optional[bool] = None
 
+# 응답 모델
+class SensorDataResponse(BaseModel):
+    status: str
+    saved_to: str
+
 # ✅ 센서 수집 API (Redis + MySQL 저장)
-@router.post("/data")
+@router.post("/data", response_model=SensorDataResponse)
 def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
     try:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         redis_key = f"sensor:{data.se_idx}:{timestamp}"
         redis_value = data.dict()
-        r.set(redis_key, json.dumps(redis_value))
 
-        new_record = SensorDataORM(
-            se_idx=data.se_idx,
-            created_at=datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S"),
-            temp=data.temp,
-            humidity=data.humidity,
-            pm10=data.pm10,
-            pm25=data.pm25,
-            outlier=data.outlier
-        )
-        db.add(new_record)
-        db.commit()
-        return {"status": "ok", "saved_to": "redis + mysql"}
+        # Redis 저장
+        r.set(redis_key, json.dumps(redis_value))
+        print(f"[Redis 저장] key={redis_key}, value={redis_value}")
+
+        # MySQL 저장
+        try:
+            new_record = SensorDataORM(
+                se_idx=data.se_idx,
+                created_at=datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S"),
+                temp=data.temp,
+                humidity=data.humidity,
+                pm10=data.pm10,
+                pm25=data.pm25,
+                outlier=data.outlier
+            )
+            db.add(new_record)
+            db.commit()
+            print("[MySQL 저장] 성공")
+        except Exception as db_error:
+            db.rollback()
+            print(f"[MySQL 저장 실패] {db_error}")
+            raise HTTPException(status_code=500, detail="MySQL 저장 실패")
+
+        # ✅ 여기가 핵심
+        return {
+            "status": "ok",
+            "saved_to": "redis + mysql"
+        }
 
     except Exception as e:
-        db.rollback()
+        print(f"[ERROR] 센서 데이터 저장 중 예외 발생: {e}")
         raise HTTPException(status_code=500, detail=f"센서 데이터 저장 실패: {str(e)}")
+
 
 
 # ✅ 최신 센서 데이터 조회 + 이상 알림 저장
@@ -107,7 +128,16 @@ def get_latest_sensor_data(
             raise HTTPException(status_code=404, detail="데이터 없음")
 
         latest_key = sorted(keys)[-1]
-        raw_data = json.loads(r.get(latest_key))
+        raw = r.get(latest_key)
+
+        if raw is None:
+            raise HTTPException(status_code=404, detail="해당 Redis 키의 값이 존재하지 않음")
+
+        try:
+            raw_data = json.loads(raw)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail="Redis JSON 파싱 오류")
+
         outlier_flag = raw_data.get("outlier", False)
 
         # ✅ 이상치일 경우 알림 저장
@@ -127,8 +157,11 @@ def get_latest_sensor_data(
             "data": raw_data
         }
 
+    except HTTPException:
+        raise  # 위에서 명확하게 raise한 HTTP 예외는 그대로 전달
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"센서 데이터 조회 실패: {str(e)}")
+
 
 # ✅ 시간별 PM10/PM2.5 데이터 조회 API
 @router.get("/pm/hourly", response_model=List[HourlyPmResponse])
