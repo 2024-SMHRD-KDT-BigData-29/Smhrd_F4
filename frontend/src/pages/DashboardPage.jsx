@@ -26,6 +26,8 @@ const getCssVariable = (name) => {
   return '';
 };
 
+// --- 컴포넌트 외부 상수 및 헬퍼 함수 ---
+const MAX_HISTORY_LENGTH = 20;
 
 
 const getAqiColor = (aqiValue) => {
@@ -164,7 +166,15 @@ const timeSeriesChartOptions = {
     },
     plugins: {
         legend: { position: 'top', align: 'end', labels: { boxWidth:12, padding:25, color: getCssVariable('--text-primary') || '#000', usePointStyle:true, pointStyle:'circle' } },
-        tooltip: { mode:'index', intersect:false, backgroundColor: getCssVariable('--sidebar-bg') || '#fff', titleFont:{size:14, weight:'bold'}, bodyFont:{size:13}, padding:12, boxPadding:6, caretPadding: 10 }
+        tooltip: {  mode: 'index',
+            intersect: false,
+            backgroundColor: getCssVariable('--sidebar-bg') || 'rgba(0, 0, 0, 0.8)', // 어두운 배경 유지 또는 변경
+            padding: 12,
+            boxPadding: 6,
+            caretPadding: 10,
+            titleFont: {
+                size: 14,
+                weight: 'bold'}, bodyFont:{size:13} }
     },
     interaction:{ mode:'index', intersect:false },
     layout: { padding: { top: 10, bottom: 10, left: 10, right: 20 } }
@@ -278,6 +288,74 @@ const getHourlyPowerConsumptionAPI = async (equipmentId, hours = 24) => {
   }
 };
 // --- ▲▲▲ API Service 종료 ---
+
+
+const generateRandomValue = (min, max, decimals = 1) => {
+  return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
+};
+
+const getMockDataForDevice = (deviceId) => {
+  const mockCurrentSensorData = {
+    pm25: generateRandomValue(5, 50),
+    pm10: generateRandomValue(10, 70),
+    temp: generateRandomValue(18, 32),
+    humidity: generateRandomValue(30, 70, 0),
+  };
+
+  const mockAqiInfo = calculateAqi(mockCurrentSensorData.pm25);
+  const mockComfortStatus = calculateComfortStatus(mockCurrentSensorData);
+
+  const mockPmTimeSeries = {
+    labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
+    datasets: [
+      {
+        label: `PM2.5 (장치 ${deviceId})`,
+        data: Array.from({ length: 24 }, () => generateRandomValue(5, 50)),
+        borderColor: getCssVariable('--color-pm25') || '#3498db',
+        backgroundColor: (getCssVariable('--color-pm25') || '#3498db') + '0D',
+        fill: true, tension: 0.4, borderWidth: 2,
+      },
+      {
+        label: `PM10 (장치 ${deviceId})`,
+        data: Array.from({ length: 24 }, () => generateRandomValue(10, 70)),
+        borderColor: getCssVariable('--color-pm10') || '#f39c12',
+        backgroundColor: (getCssVariable('--color-pm10') || '#f39c12') + '0D',
+        fill: true, tension: 0.4, borderWidth: 2,
+      }
+    ]
+  };
+
+  const mockPowerTimeSeries = {
+    labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
+    datasets: [
+      {
+        label: `전력 사용량 (W) (장치 ${deviceId})`,
+        data: Array.from({ length: 24 }, () => generateRandomValue(50, 200, 0)),
+        borderColor: getCssVariable('--color-power-consumption') || '#8e44ad',
+        backgroundColor: (getCssVariable('--color-power-consumption') || '#8e44ad') + '0D',
+        fill: true, tension: 0.4, borderWidth: 2,
+      }
+    ]
+  };
+
+  const mockPm25History = Array.from({ length: MAX_HISTORY_LENGTH }, () => ({ value: generateRandomValue(5, 50), time: new Date() }));
+  const mockPm10History = Array.from({ length: MAX_HISTORY_LENGTH }, () => ({ value: generateRandomValue(10, 70), time: new Date() }));
+
+  return {
+    currentSensorData: mockCurrentSensorData,
+    aqiInfo: mockAqiInfo,
+    comfortStatus: mockComfortStatus,
+    pmTimeSeries: mockPmTimeSeries,
+    powerTimeSeries: mockPowerTimeSeries,
+    pm25History: mockPm25History,
+    pm10History: mockPm10History,
+  };
+};
+
+
+
+
+
 
 
 
@@ -413,63 +491,68 @@ function DashboardPage({ userRole, currentUser }) {
   }, [showNotifications]);
 
 
-
+// 실제 공정데이터와 가데이터 대시보드 표현 구분 !!!
   useEffect(() => {
     const fetchDataAndUpdateDashboard = async () => {
-      console.log("fetchDataAndUpdateDashboard called");
+      console.log(`fetchDataAndUpdateDashboard called - Device ID: ${selectedDeviceId}`);
       try {
-        const [thData, pmData] = await Promise.all([
-          getLatestSensorDataAPI(1),
-          getLatestSensorDataAPI(2)
-        ]);
+        if (selectedDeviceId === 1) {
+          // ✅ 실데이터 처리
+          const [thData, pmData] = await Promise.all([
+            getLatestSensorDataAPI(1),
+            getLatestSensorDataAPI(2)
+          ]);
 
-         // ▼▼▼ 데이터 확인 로그 추가 ▼▼▼
-        // console.log("API Response for se_idx=1 (TH Data):", thData);
-        // console.log("API Response for se_idx=2 (PM Data):", pmData);
-        // ▲▲▲ 데이터 확인 로그 추가 ▲▲▲
+          const temp = thData?.temp ?? 0;
+          const humidity = thData?.humidity ?? 0;
+          const pm10 = pmData?.pm10 ?? 0;
+          const pm25 = pmData?.pm25 ?? 0;
 
-        const temp = thData?.temp ?? 0;
-        const humidity = thData?.humidity ?? 0;
-        const pm10 = pmData?.pm10 ?? 0;
-        const pm25 = pmData?.pm25 ?? 0;
+          const newSensorData = { temp, humidity, pm10, pm25 };
+          setCurrentSensorData(newSensorData);
 
-        const newSensorData = { temp, humidity, pm10, pm25 };
-        setCurrentSensorData(newSensorData); // 센서 데이터 상태 업데이트
+          const currentComfortStatus = calculateComfortStatus(newSensorData);
+          setComfortStatus(currentComfortStatus);
 
-                // --- 쾌적 상태 계산 및 업데이트 추가 ---
-        const currentComfortStatus = calculateComfortStatus(newSensorData);
-        setComfortStatus(currentComfortStatus);
-        // ------------------------------------
+          const calculatedAqi = calculateAqi(pm25);
+          setAqiInfo({
+            value: calculatedAqi.value,
+            status_text: calculatedAqi.status_text,
+          });
 
+          const now = new Date();
+          setPm25History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm25, time: now }]);
+          setPm10History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm10, time: now }]);
 
-
-
-
-
-        const calculatedAqi = calculateAqi(pm25);
-        setAqiInfo({
-          value: calculatedAqi.value,
-          status_text: calculatedAqi.status_text,
-        });
-
-        const now = new Date();
-        setPm25History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm25, time: now }]);
-        setPm10History(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: pm10, time: now }]);
-        // Temp/Humidity history 상태 업데이트 로직은 더 이상 필요 없음
-        // setTempHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: temp, time: now }]);
-        // setHumidityHistory(prev => [...prev.slice(-MAX_HISTORY_LENGTH + 1), { value: humidity, time: now }]);
-
+        } else {
+          // ✅ 가데이터 처리
+          const mock = getMockDataForDevice(selectedDeviceId);
+          setCurrentSensorData(mock.currentSensorData);
+          setAqiInfo(mock.aqiInfo);
+          setComfortStatus(mock.comfortStatus);
+          setPm25History(mock.pm25History);
+          setPm10History(mock.pm10History);
+        }
       } catch (error) {
         console.error("Error in fetchDataAndUpdateDashboard:", error);
         setAqiInfo({ value: 0, status_text: '오류' });
-        setComfortStatus('오류'); // 오류 발생 시 쾌적 상태도 오류로 표시
+        setComfortStatus('오류');
       }
     };
 
     fetchDataAndUpdateDashboard();
-    const intervalId = setInterval(fetchDataAndUpdateDashboard, 5000);
-    return () => clearInterval(intervalId);
-  }, []);
+
+    // ✅ 실데이터에만 주기적 fetch (가데이터는 정적)
+    let intervalId = null;
+    if (selectedDeviceId === 1) {
+      intervalId = setInterval(fetchDataAndUpdateDashboard, 5000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [selectedDeviceId]); // ✅ 공정 선택 변경 시 재호출
+
 
    // ▼▼▼ useEffect 2: 시간별 미세먼지 차트 데이터 로드 (컴포넌트 마운트 시 1회) ▼▼▼
   useEffect(() => {
@@ -603,88 +686,92 @@ function DashboardPage({ userRole, currentUser }) {
 
   return (
     <div className="dashboard-page-content">
-      <header className="main-header">
-        <div className="header-title-section">
-          <h2>공장 공기질 요약</h2>
-          {currentUser?.m_name && (
-            <span style={{ marginLeft: '15px', fontSize: '0.95em', color: 'var(--text-secondary)' }}>
-              (안녕하세요, {currentUser.m_name}님)
-            </span>
-          )}
-
-          {/* ✅ 공정 선택 드롭다운 추가 */}
-          <div className="device-selector-container">
-            <label htmlFor="device-select" className="device-selector-label">공정 선택:</label>
-            <select
-              id="device-select"
-              value={selectedDeviceId}
-              onChange={(e) => {
-                const newDeviceId = parseInt(e.target.value, 10);
-                if (selectedDeviceId !== newDeviceId) {
-                  setSelectedDeviceId(newDeviceId);
-                }
-              }}
-              className="device-selector-select"
-            >
-              <option value={1}>S1-MetaLab</option>
-              <option value={2}>S1-DataHub</option>
-              <option value={3}>S1-ControlRoom</option>
-              <option value={4}>S1-FactoryZone</option>
-              <option value={5}>S1-DeviceZone</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="header-actions">
-          <div className="notification-area">
-            <button onClick={() => setShowNotifications(prev => !prev)} className="notification-bell">
-              <i className="fas fa-bell"></i>
-              {alerts.filter(a => !a.is_read).length > 0 && (
-                <span className="notification-badge">
-                  {alerts.filter(a => !a.is_read).length}
+    <header className="main-header">
+      <div className="header-top-container">
+        {/* 타이틀, 인사말, 장비 선택 드롭다운을 한 줄로 배치 */}
+        <div className="header-title-section enhanced-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+            {/* 왼쪽: 제목 + 사용자 인사 */}
+            <div>
+              <h2 className="header-main-title">공장 공기질 요약</h2>
+              {currentUser?.m_name && (
+                <span className="header-sub-text">
+                  (안녕하세요, {currentUser.m_name}님)
                 </span>
               )}
-            </button>
+            </div>
 
-            {showNotifications && (
-              <div ref={notificationPanelRef} className="notification-panel">
-                <div className="notification-panel-header">
-                  <h4>알림 목록</h4>
-                </div>
-                {alerts.length === 0 ? (
-                  <p className="no-notifications">새로운 알림이 없습니다.</p>
-                ) : (
-                  <ul>
-                    {alerts.map(alert => (
-                      <li
-                        key={alert.a_idx}
-                        className={`notification-item ${alert.is_read ? 'read' : 'unread'} type-${alert.safeType}`}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <p className="notification-message">{alert.a_message}</p>
-                            <span className="notification-time">{alert.displayTime}</span>
-                          </div>
-                          {!alert.is_read && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAlertClick(alert.a_idx);
-                              }}
-                            >
-                              확인
-                            </button>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            {/* 오른쪽: 장비 선택 드롭다운 */}
+            <div className="device-title-select-inline">
+              <label htmlFor="device-select" className="device-label">장비 선택:</label>
+              <select
+                id="device-select"
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(parseInt(e.target.value, 10))}
+                className="device-select-large"
+              >
+                <option value={1}>S1-MetaLab</option>
+                <option value={2}>S1-DataHub</option>
+                <option value={3}>S1-ControlRoom</option>
+                <option value={4}>S1-FactoryZone</option>
+                <option value={5}>S1-DeviceZone</option>
+              </select>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
+
+      {/* 알림 영역은 그대로 유지 */}
+      <div className="header-actions">
+        <div className="notification-area">
+          <button onClick={() => setShowNotifications(prev => !prev)} className="notification-bell">
+            <i className="fas fa-bell"></i>
+            {alerts.filter(a => !a.is_read).length > 0 && (
+              <span className="notification-badge">
+                {alerts.filter(a => !a.is_read).length}
+              </span>
+            )}
+          </button>
+
+          {showNotifications && (
+            <div ref={notificationPanelRef} className="notification-panel">
+              <div className="notification-panel-header">
+                <h4>알림 목록</h4>
+              </div>
+              {alerts.length === 0 ? (
+                <p className="no-notifications">새로운 알림이 없습니다.</p>
+              ) : (
+                <ul>
+                  {alerts.map(alert => (
+                    <li
+                      key={alert.a_idx}
+                      className={`notification-item ${alert.is_read ? 'read' : 'unread'} type-${alert.safeType}`}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p className="notification-message">{alert.a_message}</p>
+                          <span className="notification-time">{alert.displayTime}</span>
+                        </div>
+                        {!alert.is_read && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAlertClick(alert.a_idx);
+                            }}
+                          >
+                            확인
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
 
 
       <main className="page-actual-content">

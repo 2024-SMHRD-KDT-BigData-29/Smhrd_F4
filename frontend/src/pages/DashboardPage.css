@@ -39,3 +39,26 @@
 .notification-item.read {
   opacity: 0.6;
 }
+
+.enhanced-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.device-title-select-inline {
+  display: flex;
+  align-items: center;
+  font-size: 1.05em;
+}
+
+.device-title-select-inline .device-label {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.device-select-large {
+  font-size: 1em;
+  padding: 4px 10px;
+  border-radius: 6px;
+}

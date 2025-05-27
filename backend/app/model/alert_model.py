@@ -1,11 +1,14 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func, Boolean, Float
 from ..db.database import Base
 
 class Alert(Base):
     __tablename__ = "tb_alert"
-    a_idx = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    m_id = Column(String, nullable=False)
-    he_idx = Column(Integer, ForeignKey("tb_hvac_equip.he_idx"), nullable=False)
-    a_type = Column(String(50), nullable=False)
-    a_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    is_read = Column(Boolean, nullable=False, default=False)
+    a_idx = Column(Integer, primary_key=True)
+    a_type = Column(String)
+    a_date = Column(DateTime)
+    is_read = Column(Boolean)
+    he_idx = Column(Integer, ForeignKey("tb_hvac_equip.he_idx"))
+    m_id = Column(String, ForeignKey("tb_member.m_id"))
+
+    # ✅ 실제 측정값 저장 필드 추가
+    actual_value = Column(Float, nullable=True)

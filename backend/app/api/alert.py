@@ -63,6 +63,20 @@ def get_anomaly_alerts(db: Session = Depends(get_db)):
         .order_by(Alert.a_date.desc())
         .all()
     )
+
+    def extract_actual_value(a: Alert) -> float:
+        # Alert 모델에 실제 측정값 저장 컬럼이 있다고 가정할 경우 아래처럼 처리
+        # 예시: a.temp, a.humidity, a.pm10, a.pm25 가 존재한다고 가정
+        if a.a_type == "온도이상":
+            return getattr(a, "temp", 0.0)
+        elif a.a_type == "습도이상":
+            return getattr(a, "humidity", 0.0)
+        elif a.a_type == "pm10이상":
+            return getattr(a, "pm10", 0.0)
+        elif a.a_type == "pm2_5이상":
+            return getattr(a, "pm25", 0.0)
+        return 0.0  # fallback
+
     return [
         AlertWithDeviceName(
             a_idx=a.a_idx,
@@ -72,19 +86,33 @@ def get_anomaly_alerts(db: Session = Depends(get_db)):
             a_date=a.a_date,
             is_read=a.is_read,
             he_name=he_name,
-            a_message=generate_alert_message(a.a_type, a.a_date),  # 메시지 생성 함수 사용
+            a_message=generate_alert_message(a.a_type, extract_actual_value(a)),
         )
         for a, he_name in results
     ]
 
 
-def generate_alert_message(a_type: str, a_date: datetime):
+def generate_alert_message(a_type: str, actual_value: float) -> str:
     if a_type == "온도이상":
-        return f"서버실 온도가 설정된 임계치(30°C)를 초과했습니다."
+        if actual_value < 21:
+            return f"서버실 온도가 하한 임계치(21°C) 미만입니다. 현재 온도: {actual_value:.1f}°C"
+        elif actual_value > 26:
+            return f"서버실 온도가 상한 임계치(26°C)를 초과했습니다. 현재 온도: {actual_value:.1f}°C"
+        else:
+            return f"서버실 온도가 임계 범위 내에 있으나 이상 판정됨. 현재 온도: {actual_value:.1f}°C"
+
     elif a_type == "습도이상":
-        return f"습도가 허용범위(30~60%)를 벗어났습니다."
+        if actual_value < 30:
+            return f"습도가 하한 임계치(30%) 미만입니다. 현재 습도: {actual_value:.1f}%"
+        elif actual_value > 60:
+            return f"습도가 상한 임계치(60%)를 초과했습니다. 현재 습도: {actual_value:.1f}%"
+        else:
+            return f"습도가 임계 범위 내에 있으나 이상 판정됨. 현재 습도: {actual_value:.1f}%"
+
     elif a_type == "pm10이상":
-        return f"PM10 수치가 기준(50㎍/m³)을 초과했습니다."
+        return f"PM10 수치가 기준(50㎍/m³)을 초과했습니다. 현재 수치: {actual_value:.1f}㎍/m³"
+
     elif a_type == "pm2_5이상":
-        return f"PM2.5 수치가 기준(35㎍/m³)을 초과했습니다."
+        return f"PM2.5 수치가 기준(35㎍/m³)을 초과했습니다. 현재 수치: {actual_value:.1f}㎍/m³"
+
     return "이상 상태가 감지되었습니다."

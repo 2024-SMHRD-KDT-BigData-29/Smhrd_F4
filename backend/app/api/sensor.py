@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import redis
 import json
 
+
 from app.db.database import get_db
 from typing import List
 from app.model.alert_model import Alert
@@ -43,12 +44,14 @@ def check_outlier(temp=None, humidity=None, pm10=None, pm25=None):
 
 
 # ✅ 알림 저장 함수
-def insert_alert(db: Session, m_id: str, a_type: str, a_date: datetime):
+def insert_alert(db: Session, m_id: str, a_type: str, a_date: datetime, actual_value: Optional[float] = None):
     alert = Alert(
         m_id=m_id,
-        he_idx=1,  # 공조장비 ID는 고정 1
+        he_idx=1,  # 공조장비 ID 고정
         a_type=a_type,
-        a_date=a_date
+        a_date=a_date,
+        is_read=False,
+        actual_value=actual_value  # ✅ 여기!
     )
     db.add(alert)
     db.commit()
@@ -111,13 +114,13 @@ def get_latest_sensor_data(
         if outlier_flag in [True, 1, "1"]:
             now = datetime.now()
             if raw_data.get("temp") is not None and (raw_data["temp"] < 21 or raw_data["temp"] > 26):
-                insert_alert(db, current_user.m_id, "온도이상", now)
+                insert_alert(db, current_user.m_id, "온도이상", now, actual_value=raw_data["temp"])
             if raw_data.get("humidity") is not None and (raw_data["humidity"] < 35 or raw_data["humidity"] > 60):
-                insert_alert(db, current_user.m_id, "습도이상", now)
+                insert_alert(db, current_user.m_id, "습도이상", now, actual_value=raw_data["humidity"])
             if raw_data.get("pm10") is not None and raw_data["pm10"] > 50:
-                insert_alert(db, current_user.m_id, "pm10이상", now)
+                insert_alert(db, current_user.m_id, "pm10이상", now, actual_value=raw_data["pm10"])
             if raw_data.get("pm25") is not None and raw_data["pm25"] > 35:
-                insert_alert(db, current_user.m_id, "pm2.5이상", now)
+                insert_alert(db, current_user.m_id, "pm2_5이상", now, actual_value=raw_data["pm25"])
 
         return {
             "key": latest_key.decode() if isinstance(latest_key, bytes) else latest_key,
