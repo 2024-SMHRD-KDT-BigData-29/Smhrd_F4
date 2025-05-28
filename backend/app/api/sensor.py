@@ -42,7 +42,6 @@ def check_outlier(temp=None, humidity=None, pm10=None, pm25=None):
         return True
     return False
 
-
 # ✅ 알림 저장 함수
 def insert_alert(db: Session, m_id: str, a_type: str, a_date: datetime, actual_value: Optional[float] = None):
     alert = Alert(
@@ -56,7 +55,6 @@ def insert_alert(db: Session, m_id: str, a_type: str, a_date: datetime, actual_v
     db.add(alert)
     db.commit()
     db.refresh(alert)
-
 
 # ✅ 센서 데이터 요청용 모델
 class SensorDataRequest(BaseModel):
@@ -115,7 +113,7 @@ def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
 
 
 
-# ✅ 최신 센서 데이터 조회 + 이상 알림 저장
+# ✅ 최신 센서 데이터 조회 + 이상 알림 저장 + API오류 예외처리
 @router.get("/latest")
 def get_latest_sensor_data(
     se_idx: int,
@@ -127,40 +125,63 @@ def get_latest_sensor_data(
         if not keys:
             raise HTTPException(status_code=404, detail="데이터 없음")
 
-        latest_key = sorted(keys)[-1]
-        raw = r.get(latest_key)
+        latest_data = None
+        latest_key = None
 
-        if raw is None:
-            raise HTTPException(status_code=404, detail="해당 Redis 키의 값이 존재하지 않음")
+        # 최신 키부터 역순으로 돌면서 유효한 JSON 찾기
+        for key in sorted(keys, reverse=True):
+            value = r.get(key)
+#            print(f"[DEBUG] 검사 중 key: {key} → value: {value}")
+            if not value:
+                continue
+            try:
+                parsed = json.loads(value)
+                latest_data = parsed
+                latest_key = key
+                break  # 유효한 데이터 찾으면 종료
+            except json.JSONDecodeError as e:
+                print(f"[ERROR] JSON 파싱 실패 - key: {key}, 이유: {e}")
+                continue
 
-        try:
-            raw_data = json.loads(raw)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="Redis JSON 파싱 오류")
+        if not latest_data:
+            raise HTTPException(status_code=500, detail="유효한 Redis 데이터가 없음")
 
-        outlier_flag = raw_data.get("outlier", False)
+        outlier_flag = latest_data.get("outlier", False)
+
+        # None 값이 있는 경우 대비한 안전한 추출
+        temp = latest_data.get("temp")
+        humidity = latest_data.get("humidity")
+        pm10 = latest_data.get("pm10")
+        pm25 = latest_data.get("pm25")
 
         # ✅ 이상치일 경우 알림 저장
         if outlier_flag in [True, 1, "1"]:
             now = datetime.now()
-            if raw_data.get("temp") is not None and (raw_data["temp"] < 21 or raw_data["temp"] > 26):
-                insert_alert(db, current_user.m_id, "온도이상", now, actual_value=raw_data["temp"])
-            if raw_data.get("humidity") is not None and (raw_data["humidity"] < 35 or raw_data["humidity"] > 60):
-                insert_alert(db, current_user.m_id, "습도이상", now, actual_value=raw_data["humidity"])
-            if raw_data.get("pm10") is not None and raw_data["pm10"] > 50:
-                insert_alert(db, current_user.m_id, "pm10이상", now, actual_value=raw_data["pm10"])
-            if raw_data.get("pm25") is not None and raw_data["pm25"] > 35:
-                insert_alert(db, current_user.m_id, "pm2_5이상", now, actual_value=raw_data["pm25"])
+
+            if temp is not None:
+                if temp < 21 or temp > 26:
+                    insert_alert(db, current_user.m_id, "온도이상", now, actual_value=temp)
+
+            if humidity is not None:
+                if humidity < 35 or humidity > 60:
+                    insert_alert(db, current_user.m_id, "습도이상", now, actual_value=humidity)
+
+            if pm10 is not None and pm10 > 50:
+                insert_alert(db, current_user.m_id, "pm10이상", now, actual_value=pm10)
+
+            if pm25 is not None and pm25 > 35:
+                insert_alert(db, current_user.m_id, "pm2_5이상", now, actual_value=pm25)
 
         return {
             "key": latest_key.decode() if isinstance(latest_key, bytes) else latest_key,
-            "data": raw_data
+            "data": latest_data
         }
 
     except HTTPException:
-        raise  # 위에서 명확하게 raise한 HTTP 예외는 그대로 전달
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"센서 데이터 조회 실패: {str(e)}")
+
 
 
 # ✅ 시간별 PM10/PM2.5 데이터 조회 API
@@ -191,3 +212,5 @@ def get_hourly_pm_data(
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PM 데이터 조회 실패: {str(e)}")
+
+
