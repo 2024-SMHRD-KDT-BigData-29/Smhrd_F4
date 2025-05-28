@@ -128,49 +128,49 @@ def get_latest_sensor_data(
         latest_data = None
         latest_key = None
 
-        # 최신 키부터 역순으로 돌면서 유효한 JSON 찾기
+        # 최신 키부터 유효한 JSON 파싱 가능할 때까지 역순 탐색
         for key in sorted(keys, reverse=True):
             value = r.get(key)
-#            print(f"[DEBUG] 검사 중 key: {key} → value: {value}")
             if not value:
                 continue
             try:
                 parsed = json.loads(value)
                 latest_data = parsed
                 latest_key = key
-                break  # 유효한 데이터 찾으면 종료
+                break
             except json.JSONDecodeError as e:
                 print(f"[ERROR] JSON 파싱 실패 - key: {key}, 이유: {e}")
                 continue
 
-        if not latest_data:
+        if not latest_data or not latest_key:
             raise HTTPException(status_code=500, detail="유효한 Redis 데이터가 없음")
 
-        outlier_flag = latest_data.get("outlier", False)
+        # 알림 중복 여부 확인 (Redis에 alert:sent:{key} 저장 여부)
+        alert_flag_key = f"alert:sent:{latest_key.decode() if isinstance(latest_key, bytes) else latest_key}"
+        if not r.get(alert_flag_key):
+            outlier_flag = latest_data.get("outlier", False)
 
-        # None 값이 있는 경우 대비한 안전한 추출
-        temp = latest_data.get("temp")
-        humidity = latest_data.get("humidity")
-        pm10 = latest_data.get("pm10")
-        pm25 = latest_data.get("pm25")
+            # None-safe 추출
+            temp = latest_data.get("temp")
+            humidity = latest_data.get("humidity")
+            pm10 = latest_data.get("pm10")
+            pm25 = latest_data.get("pm25")
 
-        # ✅ 이상치일 경우 알림 저장
-        if outlier_flag in [True, 1, "1"]:
             now = datetime.now()
 
-            if temp is not None:
-                if temp < 21 or temp > 26:
+            # 이상치 조건 만족 시 알림 저장
+            if outlier_flag in [True, 1, "1"]:
+                if temp is not None and (temp < 21 or temp > 26):
                     insert_alert(db, current_user.m_id, "온도이상", now, actual_value=temp)
-
-            if humidity is not None:
-                if humidity < 35 or humidity > 60:
+                if humidity is not None and (humidity < 35 or humidity > 60):
                     insert_alert(db, current_user.m_id, "습도이상", now, actual_value=humidity)
+                if pm10 is not None and pm10 > 50:
+                    insert_alert(db, current_user.m_id, "pm10이상", now, actual_value=pm10)
+                if pm25 is not None and pm25 > 35:
+                    insert_alert(db, current_user.m_id, "pm2_5이상", now, actual_value=pm25)
 
-            if pm10 is not None and pm10 > 50:
-                insert_alert(db, current_user.m_id, "pm10이상", now, actual_value=pm10)
-
-            if pm25 is not None and pm25 > 35:
-                insert_alert(db, current_user.m_id, "pm2_5이상", now, actual_value=pm25)
+                # 중복 알림 방지용 Redis 키 기록 (예: 1시간 동안 유지)
+                r.setex(alert_flag_key, 3600, "1")
 
         return {
             "key": latest_key.decode() if isinstance(latest_key, bytes) else latest_key,
@@ -181,6 +181,7 @@ def get_latest_sensor_data(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"센서 데이터 조회 실패: {str(e)}")
+
 
 
 

@@ -9,6 +9,7 @@ class AlertWithDeviceName(BaseModel):
     a_date: datetime
     is_read: bool
     he_name: str  # ✅ 추가
+    a_message: str  # ✅ 여기에 메시지 필드 추가
 
     class Config:
         orm_mode = True

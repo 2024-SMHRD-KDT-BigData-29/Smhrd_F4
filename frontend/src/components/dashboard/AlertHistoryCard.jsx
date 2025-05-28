@@ -2,8 +2,6 @@
 import React from 'react';
 import './AlertHistoryCard.css'; // ✅ css 연결
 
-
-
 const styles = {
   alertHistoryCard: {
     backgroundColor: 'white',
@@ -40,17 +38,27 @@ function AlertHistoryCard({ title, alerts, onConfirm }) {
           <li>최근 알림이 없습니다.</li>
         ) : (
           alerts.map((alert) => (
-            <li key={alert.a_idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <li
+              key={alert.a_idx}
+              className={`notification-item ${alert.is_read ? 'read' : 'unread'} type-${alert.a_type}`}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <div>
                 <span style={styles.listItemTime}>
-                  {new Date(alert.a_date).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(alert.a_date).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </span>
-                <span>
-                  <strong>{alert.he_name}</strong>에서 {alert.a_type} 발생
+                <span className="notification-message">
+                  {alert.a_message || `${alert.he_name || '장비'}에서 ${alert.a_type || '이상'} 발생`}
                 </span>
               </div>
               {!alert.is_read && (
-                <button onClick={() => onConfirm(alert.a_idx)} style={{ fontSize: '12px', marginLeft: '10px' }}>
+                <button
+                  onClick={() => onConfirm(alert.a_idx)}
+                  style={{ fontSize: '12px', marginLeft: '10px' }}
+                >
                   확인
                 </button>
               )}
