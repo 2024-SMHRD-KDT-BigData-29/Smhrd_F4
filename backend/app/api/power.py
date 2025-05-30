@@ -13,6 +13,8 @@ from app.schema.power_schema import PowerDataCreate, PowerDataRecordResponse, Ho
 
 router = APIRouter(tags=["Power Consumption"]) # main.py에서 prefix="/api/power"로 포함될 것임
 
+# 한국 시간대 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 @router.post("/data", response_model=PowerDataRecordResponse)
 def create_power_data_entry(
@@ -45,36 +47,36 @@ def create_power_data_entry(
 
 @router.get("/hourly_consumption", response_model=List[HourlyPowerConsumptionResponse])
 def get_hourly_power_consumption(
-        he_idx: int = Query(..., description="조회할 장비의 ID (he_idx)"),
-        hours: int = Query(24, description="조회할 최근 시간 범위 (기본값: 24시간)", ge=1, le=168 * 2),
-        db: Session = Depends(get_db)
+    he_idx: int = Query(..., description="조회할 장비의 ID (he_idx)"),
+    hours: int = Query(24, description="조회할 최근 시간 범위 (기본값: 24시간)", ge=1, le=168 * 2),
+    db: Session = Depends(get_db)
 ):
-    end_time_naive_utc = datetime.utcnow()
-    start_time_naive_utc = end_time_naive_utc - timedelta(hours=hours)
+    # ✅ KST 기준 현재 시각
+    end_time_kst = datetime.now(KST)
+    start_time_kst = end_time_kst - timedelta(hours=hours)
 
-    print(f"Querying hourly power data for he_idx={he_idx}")
-    print(f"Time range (naive UTC for query): {start_time_naive_utc.isoformat()} TO {end_time_naive_utc.isoformat()}")
+    print(f"[Power API] he_idx={he_idx} 시간 범위 (KST): {start_time_kst.isoformat()} ~ {end_time_kst.isoformat()}")
 
     try:
         query_results = (
             db.query(
-                PowerDataORM.p_data.label("timestamp"),
+                PowerDataORM.created_at.label("timestamp"),
                 PowerDataORM.p_power.label("wattage")
             )
             .filter(
                 PowerDataORM.he_idx == he_idx,
-                PowerDataORM.p_data >= start_time_naive_utc,
-                PowerDataORM.p_data <= end_time_naive_utc
+                PowerDataORM.created_at >= start_time_kst,
+                PowerDataORM.created_at <= end_time_kst
             )
-            .order_by(PowerDataORM.p_data.asc())
+            .order_by(PowerDataORM.created_at.asc())
             .all()
         )
-        print(f"SQL query for hourly power data found {len(query_results)} records.")
+
+        print(f"[Power API] 조회된 전력 데이터 개수: {len(query_results)}개")
         return query_results
     except Exception as e:
-        print(f"Error fetching hourly power data: {str(e)}")
-        raise HTTPException(status_code=500, detail="시간별 전력량 데이터 조회 중 오류가 발생했습니다.")
-
+        print(f"[ERROR] 시간별 전력 데이터 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail="시간별 전력량 데이터 조회 중 오류 발생")
 
 
 @router.get("/by_date", response_model=List[HourlyPowerConsumptionResponse])
@@ -97,17 +99,18 @@ def get_power_consumption_by_date(
 
         query_results = (
             db.query(
-                PowerDataORM.p_data.label("timestamp"),
+                PowerDataORM.created_at.label("timestamp"),  # ← 수정됨
                 PowerDataORM.p_power.label("wattage")
             )
             .filter(
                 PowerDataORM.he_idx == he_idx,
-                PowerDataORM.p_data >= start_time_naive_utc,
-                PowerDataORM.p_data <= end_time_naive_utc
+                PowerDataORM.created_at >= start_time_naive_utc,  # ← 수정됨
+                PowerDataORM.created_at <= end_time_naive_utc  # ← 수정됨
             )
-            .order_by(PowerDataORM.p_data.asc())
+            .order_by(PowerDataORM.created_at.asc())  # ← 수정됨
             .all()
         )
+
         print(f"SQL query for power data by date found {len(query_results)} records.")
         return query_results
     except ValueError:
@@ -116,4 +119,24 @@ def get_power_consumption_by_date(
     except Exception as e:
         print(f"Error fetching power data by date: {str(e)}")
         raise HTTPException(status_code=500, detail="일별 전력량 데이터 조회 중 오류가 발생했습니다.")
+
+@router.get("/all_data", response_model=List[HourlyPowerConsumptionResponse])
+def get_all_power_data(
+    he_idx: int = Query(..., description="장비 ID (he_idx)"),
+    db: Session = Depends(get_db)
+):
+    try:
+        results = (
+            db.query(
+                PowerDataORM.created_at.label("timestamp"),  # ✅ 컬럼명 변경 반영
+                PowerDataORM.p_power.label("wattage")
+            )
+            .filter(PowerDataORM.he_idx == he_idx)
+            .order_by(PowerDataORM.created_at.asc())
+            .all()
+        )
+        return results
+    except Exception as e:
+        print(f"[ERROR] 전체 전력 데이터 로드 실패: {e}")
+        raise HTTPException(status_code=500, detail="전체 전력 데이터 조회 중 오류 발생")
 

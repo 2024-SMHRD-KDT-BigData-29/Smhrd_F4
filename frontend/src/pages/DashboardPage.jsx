@@ -416,7 +416,7 @@ function DashboardPage({ userRole, currentUser }) {
       {
         label: '전력 사용량 (W)',
         data: [],
-        borderColor: getCssVariable('--color-temp') || '#e74c3c', // 전력량에 맞는 색상으로 변경 추천
+        borderColor: getCssVariable('--color-temp') || '#e74c3c',
         backgroundColor: (getCssVariable('--color-temp') || '#e74c3c') + '0D',
         fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3,
         pointBackgroundColor: getCssVariable('--color-temp') || '#e74c3c',
@@ -425,6 +425,8 @@ function DashboardPage({ userRole, currentUser }) {
     ],
   });
   const [loadingPowerConsumption, setLoadingPowerConsumption] = useState(true);
+  const [noPowerDataToday, setNoPowerDataToday] = useState(false); // <<--- 추가
+
   // ▲▲▲ 시간별 전력량 차트 데이터 상태 추가 ▲▲▲
 
 
@@ -598,42 +600,39 @@ function DashboardPage({ userRole, currentUser }) {
   }, []); // timeSeriesData.datasets를 의존성 배열에 추가하여 초기값 구조 유지
   // ▲▲▲ useEffect 2 종료 ▲▲▲
 
- // ▼▼▼ useEffect 3: 시간별 전력량 차트 데이터 로드 (새로 추가) ▼▼▼
+  // ▼▼▼ useEffect 3: 시간별 전력량 차트 데이터 로드 (수정됨) ▼▼▼
   useEffect(() => {
     const fetchHourlyPowerData = async () => {
       setLoadingPowerConsumption(true);
-      const targetHeIdxForPower = 1; // TODO: 실제 전력량 조회할 장비의 he_idx로 변경
+      const targetHeIdxForPower = 1;
       const hoursToFetch = 24;
 
-      console.log(`Workspaceing hourly power data for he_idx=${targetHeIdxForPower}...`);
       const hourlyPowerData = await getHourlyPowerConsumptionAPI(targetHeIdxForPower, hoursToFetch);
-      console.log(`API Response for hourly power data (he_idx=${targetHeIdxForPower}):`, hourlyPowerData);
 
       if (hourlyPowerData && hourlyPowerData.length > 0) {
         const labels = hourlyPowerData.map(item => {
-          const date = new Date(item.timestamp); // API 응답의 timestamp (p_data)
+          const date = new Date(item.timestamp);
           return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         });
-        const wattageValues = hourlyPowerData.map(item => item.wattage); // API 응답의 wattage (p_power)
+        const wattageValues = hourlyPowerData.map(item => item.wattage);
 
         setPowerConsumptionData(prevData => ({
-          labels: labels,
-          datasets: [
-            { ...prevData.datasets[0], data: wattageValues },
-          ],
+          labels,
+          datasets: [{ ...prevData.datasets[0], data: wattageValues }]
         }));
+        setNoPowerDataToday(false); // ✅ 데이터 존재함
       } else {
-        console.warn(`No hourly power data for he_idx=${targetHeIdxForPower}, or an error occurred. Resetting chart.`);
         setPowerConsumptionData(prevData => ({
-            labels: [],
-            datasets: [ { ...prevData.datasets[0], data: [] } ]
+          labels: [],
+          datasets: [{ ...prevData.datasets[0], data: [] }]
         }));
+        setNoPowerDataToday(true); // ✅ 오늘 데이터 없음 표시
       }
       setLoadingPowerConsumption(false);
     };
 
     fetchHourlyPowerData();
-  }, []); // 컴포넌트 마운트 시 1회 실행
+  }, []);
   // --- ▲▲▲ useEffect 3 종료 ---
 
 
@@ -804,16 +803,20 @@ function DashboardPage({ userRole, currentUser }) {
             )}
           </div>
            {/* ▼▼▼ 기존 DailyAverageChartCard를 전력량 차트로 교체 ▼▼▼ */}
-          <div className="right-column-container card power-consumption-trend-card"> {/* 클래스명 예시 */}
+          <div className="right-column-container card power-consumption-trend-card">
             {loadingPowerConsumption ? (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '250px' }}>
                 <p>시간별 전력 사용량 데이터 로딩 중...</p>
               </div>
+            ) : noPowerDataToday ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '250px' }}>
+                <p>오늘 사용한 전력량이 없습니다.</p>
+              </div>
             ) : (
-              <TimeSeriesChartCard // TimeSeriesChartCard 재사용 (선 그래프이므로)
-                title="시간별 전력 사용량 (W)" // 제목 변경
-                chartData={powerConsumptionData} // 새로운 데이터 상태 사용
-                chartOptions={timeSeriesChartOptions} // 필요시 전력량 전용 옵션 객체 사용
+              <TimeSeriesChartCard
+                title="시간별 전력 사용량 (W)"
+                chartData={powerConsumptionData}
+                chartOptions={timeSeriesChartOptions}
               />
             )}
           </div>

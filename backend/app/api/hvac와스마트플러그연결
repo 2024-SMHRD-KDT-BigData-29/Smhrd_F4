@@ -1,0 +1,31 @@
+@router.put("/{he_idx}/", response_model=HvacResponse)
+def update_hvac_equipment(
+    he_idx: int,
+    update_data: HvacUpdateRequest,
+    db: Session = Depends(get_db)
+):
+    db_item = db.query(HvacEquipment).filter(HvacEquipment.he_idx == he_idx).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="HVAC 장비를 찾을 수 없습니다.")
+
+    # 변경 적용
+    for field, value in update_data.dict().items():
+        setattr(db_item, field, value)
+
+    try:
+        db.commit()
+        db.refresh(db_item)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # ✅ 스마트플러그 제어 연결
+    try:
+        if db_item.he_idx == 1:  # ← 제어 대상 장비 한정 (필요시 조건 확장 가능)
+            action = "on" if db_item.he_power else "off"
+            requests.post("http://localhost:8000/api/plug", json={"action": action})  # 로컬호스트 기준
+            print(f"[SmartPlug] 전원 {action.upper()} 요청 완료")
+    except Exception as plug_error:
+        print(f"[SmartPlug 제어 실패] {plug_error}")
+
+    return db_item

@@ -1,0 +1,79 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from datetime import datetime
+import json
+import pandas as pd
+import joblib
+import redis
+
+from app.db.database import get_db
+from app.model.sensor_data_model import SensorData as SensorDataORM
+from app.schema.sensor import SensorDataRequest, SensorDataResponse
+
+router = APIRouter(prefix="/api/sensor", tags=["Sensor"])
+r = redis.Redis(host="localhost", port=6379, db=0)  # Redis 연결
+
+@router.post("/data", response_model=SensorDataResponse)
+def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        redis_key = f"sensor:{data.se_idx}:{timestamp}"
+        redis_value = data.dict()
+
+        # Redis 저장
+        r.set(redis_key, json.dumps(redis_value))
+
+        # ✅ 이상치 탐지
+        is_outlier = False
+
+        # ✅ 기존 코드 중 이상치 판별 부분 (수정 후)
+        try:
+            if data.temp is not None and data.humidity is not None:
+                model = joblib.load("app/train_model/isoforest_temp_humidity.pkl")
+                scaler = joblib.load("app/train_model/scaler_temp_humidity.pkl")
+                new_data = pd.DataFrame([[data.temp, data.humidity]], columns=["temp", "humidity"])
+                X_scaled = scaler.transform(new_data)
+                result = model.predict(X_scaled)
+                is_outlier = result[0] == -1
+
+            elif data.pm10 is not None and data.pm25 is not None:
+                model = joblib.load("app/train_model/isoforest_pm.pkl")
+                scaler = joblib.load("app/train_model/scaler_pm.pkl")
+                new_data = pd.DataFrame([[data.pm10, data.pm25]], columns=["pm10", "pm25"])
+                X_scaled = scaler.transform(new_data)
+                result = model.predict(X_scaled)
+                is_outlier = result[0] == -1
+
+            else:
+                raise ValueError("필수 데이터 누락")
+
+        except Exception as model_err:
+            print(f"[모델 예측 오류] {model_err}")
+            is_outlier = False
+
+
+        # ✅ MySQL 저장
+        try:
+            new_record = SensorDataORM(
+                se_idx=data.se_idx,
+                created_at=datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S"),
+                temp=data.temp,
+                humidity=data.humidity,
+                pm10=data.pm10,
+                pm25=data.pm25,
+                outlier=is_outlier
+            )
+            db.add(new_record)
+            db.commit()
+        except Exception as db_err:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"MySQL 저장 실패: {db_err}")
+
+        return {
+            "status": "ok",
+            "saved_to": "redis + mysql",
+            "outlier": is_outlier
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"센서 데이터 저장 실패: {str(e)}")

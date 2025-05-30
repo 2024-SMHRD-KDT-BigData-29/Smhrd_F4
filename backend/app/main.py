@@ -4,12 +4,15 @@ import sys
 import os
 print("🔥 실행된 main.py 경로:", os.path.abspath(__file__))
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(os.path.join(os.path.dirname(__file__), "app"))
 # => SmhrdF4_git/backend 경로를 PYTHONPATH에 강제로 추가
 
 from app.db.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert, power  # 상대경로 아님에 주의!
+from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert, power, data_analysis  # 상대경로 아님에 주의!
+
+
 
 # SQLAlchemy
 from app.model.sensor_equip_model import SensorEquip  # ✅ 이 줄 추가
@@ -37,7 +40,7 @@ app.include_router(hvac.router, tags=["HVAC"])
 app.include_router(control.router)
 app.include_router(alert.router)
 app.include_router(power.router, prefix="/api/power")
-
+app.include_router(data_analysis.router)
 
 @app.get("/")
 def root():

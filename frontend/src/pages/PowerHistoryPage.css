@@ -1,0 +1,76 @@
+.power-history-page {
+  padding: 20px;
+  background-color: #f4f6f8;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-date-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  flex-wrap: nowrap;
+}
+
+.left-panel,
+.right-panel {
+  flex: 1 1 50%;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.data-table-container {
+  max-height: 500px;
+  overflow-y: auto;
+  margin-top: 12px;
+}
+
+.power-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.power-table th,
+.power-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.95em;
+}
+
+.power-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.power-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.power-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.chart-wrapper {
+  height: 400px;
+}

@@ -55,12 +55,27 @@ function Sidebar({ userRole, onLogout,currentUser }) {
             </li>
           )}
 
+          {/* "전력량 이력" 메뉴 추가 */}
+          <li>
+            <NavLink to="/power-history" className={({ isActive }) => isActive ? 'active' : ''}>
+              <i className="fas fa-bolt"></i> 전력량 이력
+            </NavLink>
+          </li>
+
           {/* "이상 탐지 이력" 메뉴 추가 */}
           <li>
             <NavLink to="/anomaly-history" className={({ isActive }) => isActive ? 'active' : ''}>
               <i className="fas fa-exclamation-triangle"></i> 이상 탐지 이력 {/* 아이콘 예시 */}
             </NavLink>
           </li>
+
+          {/* "환경 데이터 분석" 메뉴 추가 */}
+          <li>
+            <NavLink to="/isolation-forest" className={({ isActive }) => isActive ? 'active' : ''}>
+              <i className="fas fa-chart-line"></i> 환경 데이터 분석
+            </NavLink>
+          </li>
+
 
           {/* 다른 메뉴들도 필요하다면 NavLink로 변경 (예: /reports, /settings 등) */}
           {/*

@@ -14,8 +14,8 @@ class PowerData(Base):
     # 사용자의 확인에 따라 tb_hvac_equip.he_idx를 참조하도록 설정
     he_idx = Column(Integer, ForeignKey("tb_hvac_equip.he_idx"), nullable=False)
 
-    # p_data (측정 시간)는 NOT NULL로 설정하고, 기본값으로 현재 UTC 시간 저장 권장
-    p_data = Column(DateTime, nullable=False, default=datetime.utcnow)
+    # p_date (측정 시간)는 NOT NULL로 설정하고, 기본값으로 현재 UTC 시간 저장 권장
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # p_power (소비 전력)는 float이고 NOT NULL
     p_power = Column(Float, nullable=False)

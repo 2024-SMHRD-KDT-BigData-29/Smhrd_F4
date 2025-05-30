@@ -219,9 +219,17 @@ const DeviceManagementPage = () => {
   // --- 공조 설비 핸들러 (tb_hvac_equip) ---
   // he_power 값을 ON/OFF (1/0) 토글
   const handleHvacStatusToggle = async (hvacEquipment) => {
+
+    const hvacId = hvacEquipment.he_idx;
+
+    // ❗ ID가 1이 아닌 경우 연결되지 않은 장비로 간주하고 차단
+    if (parseInt(hvacId) !== 1) {
+      alert("공조 설비 상태 변경 실패: 유효하지 않은 엣지보드 ID입니다.");
+      return;
+    }
+
     const currentPowerState = hvacEquipment.he_power; // 현재 boolean 상태
     const newPowerStateBool = !currentPowerState;    // 반전된 boolean 상태
-    const hvacId = hvacEquipment.he_idx;
 
     // 원래의 모든 데이터를 포함하여 업데이트 (he_power만 변경)
     const payload = {

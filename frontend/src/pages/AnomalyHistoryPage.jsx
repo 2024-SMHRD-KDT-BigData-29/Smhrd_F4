@@ -21,10 +21,13 @@ const AnomalyHistoryPage = ({ currentUser }) => { // currentUser prop 추가 (�
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+
+
+
   useEffect(() => {
     const loadAnomalyHistory = async () => {
       setIsLoading(true);
-      try {
+      try {///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         const response = await fetch("http://localhost:8000/api/alert/anomalies");
         if (!response.ok) throw new Error("API 요청 실패");
         const data = await response.json();
@@ -69,7 +72,6 @@ const AnomalyHistoryPage = ({ currentUser }) => { // currentUser prop 추가 (�
                   <th>유형 </th>
                   <th>상세 내용 </th>
                   <th>조치 상태 </th>
-                  <th>작업</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,17 +80,13 @@ const AnomalyHistoryPage = ({ currentUser }) => { // currentUser prop 추가 (�
                     <td>{anomaly.display_a_date}</td>
                     <td>{anomaly.device_identifier || '-'}</td>
                     <td>{anomaly.a_type}</td>
-                    <td style={{maxWidth: '400px', whiteSpace: 'normal', wordBreak: 'break-all'}}>{anomaly.a_message}</td>
+                    <td style={{ maxWidth: '400px', whiteSpace: 'normal', wordBreak: 'break-all' }}>
+                      {anomaly.a_message}
+                    </td>
                     <td>
                       <span className={`status-badge status-${String(anomaly.status_처리상태).replace(/\s+/g, '-').toLowerCase()}`}>
                         {anomaly.status_처리상태}
                       </span>
-                    </td>
-                    <td>
-                      <button className="action-btn mini-btn">상세정보</button>
-                      {/* {currentUser && currentUser.role === 'admin' && anomaly.status_처리상태 !== '조치 완료' && (
-                        <button className="action-btn mini-btn primary-btn" style={{marginLeft: '5px'}}>조치</button>
-                      )} */}
                     </td>
                   </tr>
                 ))}

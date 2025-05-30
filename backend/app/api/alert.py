@@ -67,15 +67,7 @@ def get_anomaly_alerts(db: Session = Depends(get_db)):
     def extract_actual_value(a: Alert) -> float:
         # Alert 모델에 실제 측정값 저장 컬럼이 있다고 가정할 경우 아래처럼 처리
         # 예시: a.temp, a.humidity, a.pm10, a.pm25 가 존재한다고 가정
-        if a.a_type == "온도이상":
-            return getattr(a, "temp", 0.0)
-        elif a.a_type == "습도이상":
-            return getattr(a, "humidity", 0.0)
-        elif a.a_type == "pm10이상":
-            return getattr(a, "pm10", 0.0)
-        elif a.a_type == "pm2_5이상":
-            return getattr(a, "pm25", 0.0)
-        return 0.0  # fallback
+        return a.actual_value if a.actual_value is not None else 0.0
 
     return [
         AlertWithDeviceName(

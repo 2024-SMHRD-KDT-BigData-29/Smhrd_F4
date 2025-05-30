@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import redis
 import json
 
-
 from app.db.database import get_db
 from typing import List
 from app.model.alert_model import Alert
@@ -14,6 +13,11 @@ from app.model.sensor_data_model import SensorData as SensorDataORM  # ORM용
 # User를 직접 만들기 위해 import
 from pydantic import BaseModel
 from app.schema.sensor import HourlyPmResponse, SensorDataResponse
+
+#########################################################
+# isolation 연결시 주석풀어야함
+#from app.train_model.isolation_fred import predict_outlier
+#########################################################
 
 router = APIRouter(prefix="/api/sensor", tags=["Sensor"])
 
@@ -30,17 +34,17 @@ def get_current_user() -> User:
     return User(m_id="admin")
 
 
-# ✅ 이상치 판별 함수
-def check_outlier(temp=None, humidity=None, pm10=None, pm25=None):
-    if temp is not None and (temp < 21 or temp > 26):
-        return True
-    if humidity is not None and (humidity < 35 or humidity > 60):
-        return True
-    if pm25 is not None and pm25 > 35:
-        return True
-    if pm10 is not None and pm10 > 50:
-        return True
-    return False
+# ✅ 이상치 판별 함수// 라즈베리파이 내부 코드
+# def check_outlier(temp=None, humidity=None, pm10=None, pm25=None):
+#     if temp is not None and (temp < 21 or temp > 26):
+#         return True
+#     if humidity is not None and (humidity < 35 or humidity > 60):
+#         return True
+#     if pm25 is not None and pm25 > 35:
+#         return True
+#     if pm10 is not None and pm10 > 50:
+#         return True
+#     return False
 
 # ✅ 알림 저장 함수
 def insert_alert(db: Session, m_id: str, a_type: str, a_date: datetime, actual_value: Optional[float] = None):
@@ -81,6 +85,14 @@ def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
         # Redis 저장
         r.set(redis_key, json.dumps(redis_value))
         print(f"[Redis 저장] key={redis_key}, value={redis_value}")
+
+######################################################################
+        # # ✅ 온도/습도 이상치 판단
+        # if data.temp is not None and data.humidity is not None:
+        #     is_outlier = predict_outlier(data.temp, data.humidity)
+        #     print("[AI 모델 판별] 이상 감지됨" if is_outlier else "[AI 모델 판별] 정상")
+######################################################################
+
 
         # MySQL 저장
         try:

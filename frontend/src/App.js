@@ -8,6 +8,8 @@ import SignUpPage from './pages/SignUpPage'; // SignUpPage import 추가
 import DashboardPage from './pages/DashboardPage'; // DashboardPage import 확인!
 import AnomalyHistoryPage from './pages/AnomalyHistoryPage'; // AnomalyHistoryPage import 확인!
 import DeviceManagementPage from './pages/DeviceManagementPage';
+import IsolationForestPage from './pages/IsolationForestPage';
+import PowerHistoryPage from './pages/PowerHistoryPage';
 
 import './App.css';
 
@@ -80,6 +82,8 @@ function App() {
                 <Route path="/device-management" element={<DeviceManagementPage currentUser={currentUser} />} />
               )}
               <Route path="*" element={<Navigate replace to="/dashboard" />} />
+              <Route path="/isolation-forest" element={<IsolationForestPage />} />
+              <Route path="/power-history" element={<PowerHistoryPage />} />
             </Routes>
           </main>
         </div>

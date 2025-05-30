@@ -37,7 +37,7 @@ body, html {
     color: var(--text-primary);
     font-size: 14px;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* "시간별 미세먼지 변화" 차트 캔버스에만 적용될 더 작은 최대 높이 */
@@ -188,7 +188,7 @@ body, html {
     padding: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* main-content 내부에 페이지 컴포넌트가 렌더링될 때, 그 페이지 컴포넌트의 헤더 */
