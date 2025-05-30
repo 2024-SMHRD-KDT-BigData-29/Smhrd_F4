@@ -197,33 +197,52 @@ def get_latest_sensor_data(
 
 
 
-# ✅ 시간별 PM10/PM2.5 데이터 조회 API
-@router.get("/pm/hourly", response_model=List[HourlyPmResponse])
-def get_hourly_pm_data(
-    se_idx: int = Query(..., description="센서 ID"),
-    hours: int = Query(24, description="조회할 시간 범위 (1~48시간)", ge=1, le=48),
-    db: Session = Depends(get_db)
-):
+# ✅ 센서 수집 API (Redis + MySQL 저장)
+@router.post("/data", response_model=SensorDataResponse)
+def receive_sensor_data(data: SensorDataRequest, db: Session = Depends(get_db)):
     try:
-        end_time = datetime.utcnow()
-        start_time = end_time - timedelta(hours=hours)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        redis_key = f"sensor:{data.se_idx}:{timestamp}"
+        redis_value = data.dict()
 
-        results = (
-            db.query(
-                SensorDataORM.created_at.label("timestamp"),
-                SensorDataORM.pm10,
-                SensorDataORM.pm25
+        # Redis 저장
+        r.set(redis_key, json.dumps(redis_value))
+        print(f"[Redis 저장] key={redis_key}, value={redis_value}")
+
+        # MySQL 저장
+        try:
+            new_record = SensorDataORM(
+                se_idx=data.se_idx,
+                created_at=datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S"),
+                temp=data.temp,
+                humidity=data.humidity,
+                pm10=data.pm10,
+                pm25=data.pm25,
+                outlier=data.outlier
             )
-            .filter(
-                SensorDataORM.se_idx == se_idx,
-                SensorDataORM.created_at >= start_time,
-                SensorDataORM.created_at <= end_time
-            )
-            .order_by(SensorDataORM.created_at.asc())
-            .all()
-        )
-        return results
+            db.add(new_record)
+            db.commit()
+            print("[MySQL 저장] 성공")
+        except Exception as db_error:
+            db.rollback()
+            print(f"[MySQL 저장 실패] {db_error}")
+            raise HTTPException(status_code=500, detail="MySQL 저장 실패")
+
+        # ✅ 이상치일 경우 스마트플러그 전원 ON 요청
+        if data.outlier in [True, 1, "1"]:
+            try:
+                import requests
+                res = requests.post("http://localhost:8000/api/tapo/plug", json={"action": "on"})
+                print(f"[SmartPlug 제어] 이상치 감지로 전원 ON → 응답: {res.status_code}")
+            except Exception as plug_error:
+                print(f"[SmartPlug 제어 오류] {plug_error}")
+
+        return {
+            "status": "ok",
+            "saved_to": "redis + mysql"
+        }
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PM 데이터 조회 실패: {str(e)}")
-
+        print(f"[ERROR] 센서 데이터 저장 중 예외 발생: {e}")
+        raise HTTPException(status_code=500, detail=f"센서 데이터 저장 실패: {str(e)}")
 

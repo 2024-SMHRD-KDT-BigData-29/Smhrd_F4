@@ -1,9 +1,13 @@
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, Depends
 from pydantic import BaseModel
 # pip install tapo
 from tapo import ApiClient
 import asyncio
+import datetime
 
+from app.db.database import get_db
+from app.model.power_data_model import PowerData
+from sqlalchemy.orm import Session
 
 # TAPO 접속 정보
 TAPO_EMAIL = "jangone12@naver.com"
@@ -13,7 +17,7 @@ TAPO_IP = "192.168.0.129"
 
 #asyncio.run(main())
 
-router = APIRouter(prefix="/api", tags=["Tapo"])
+router = APIRouter(prefix="/api/tapo", tags=["Tapo"])
 
 # 요청 모델
 class PlugCommand(BaseModel):
@@ -61,3 +65,21 @@ async def get_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/plug/save_power")
+async def save_current_power(db: Session = Depends(get_db)):
+    plug = await get_plug()
+    try:
+        energy = await plug.get_energy_usage()
+        current_power_watt = round(energy.current_power / 1000, 2)  # mW → W 변환
+
+        power_data = PowerData(
+            he_idx=1,  # 고정 또는 파라미터화 가능
+            p_power=current_power_watt,
+            created_at=datetime.now()
+        )
+        db.add(power_data)
+        db.commit()
+        return {"status": "success", "watt": current_power_watt}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

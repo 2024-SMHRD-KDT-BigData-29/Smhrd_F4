@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.db.database import Base, engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert, power, data_analysis  # 상대경로 아님에 주의!
+from app.api import auth, dashboard, sensor, edge_board, hvac, control, alert, power, data_analysis, tapoP110  # 상대경로 아님에 주의!
 
 
 
@@ -41,6 +41,7 @@ app.include_router(control.router)
 app.include_router(alert.router)
 app.include_router(power.router, prefix="/api/power")
 app.include_router(data_analysis.router)
+app.include_router(tapoP110.router)
 
 @app.get("/")
 def root():
