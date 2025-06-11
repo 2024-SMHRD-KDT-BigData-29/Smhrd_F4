@@ -14,12 +14,11 @@
 <br>
 
 ## ⭐ 주요 기능
-* 
-* 
-* 
-* 
-* 
-* 
+* JWT 기반 회원가입 및 로그인 API 구현
+* 라즈베리파이를 이용한 미세먼지·온습도 실시간 수집 시스템 구축
+* 실시간 센서 데이터를 Redis → FastAPI → MySQL로 저장 및 대시보드 시각화
+* TP-Link 스마트플러그를 이용한 공조장비 수동 제어 및 전력 모니터링
+* Isolation Forest 알고리즘을 활용한 이상치 탐지 및 자동 공조제어와 알림 시스템 구현
 <br>
 
 ## ⛏ 기술스택
@@ -31,7 +30,7 @@
     <tr>
         <td>사용언어</td>
         <td>
-            [<img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54"/>
+            <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54"/>
             <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=CSS3&logoColor=white"/>
             <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=JavaScript&logoColor=white"/>
         </td>
@@ -46,7 +45,7 @@
     <tr>
         <td>개발도구</td>
         <td>
-            <img src="https://img.shields.io/badge/PyCharm-000000?style=flat-square&logo=PyCharm&logoColor=white"
+            <img src="https://img.shields.io/badge/PyCharm-000000?style=flat-square&logo=PyCharm&logoColor=white"/>
             <img src="https://img.shields.io/badge/Visual Studio Code-007ACC?style=flat-square&logo=Visual Studio Code&logoColor=white"/>
         </td>
     </tr>
@@ -60,7 +59,8 @@
     <tr>
         <td>데이터베이스</td>
         <td>
-            <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=white"/> 
+            <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=white"/>
+            <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white"/>
         </td>
     </tr>
     <tr>
@@ -136,17 +136,24 @@
 이선홍 : 저는 이번프로젝트에서 UI/UX설계와 Frontend-sub를 담당했습니다. <br>
 이겨라 : 저는 이번프로젝트에서 React 대시보드 구현과 공기질 상태 시각화와 FastAPI연동을 담당했습니다. <br>
 
+![팀사진_스인재F4](https://github.com/user-attachments/assets/57b700cd-7f69-4059-a539-b5aa376bcfa2)
+
 ## 🤾‍♂️ 트러블슈팅
 
   
 * 문제1<br>
-
+![24](https://github.com/user-attachments/assets/9ac47f4e-9383-4304-bda8-89eb8ed2202f)
 <br>
-html에서 작성한 코드가 브라우저에 반영이 안되어있는 모습인데요<br>
-해결 : 기존에 남아 있던 브라우저의 캐시를 지우고 프로젝트를 Clean 진행 후 해결되었습니다. <br>
+초기 대시보드 로딩 시 API 응답 지연으로 데이터가 표시되지 않는 문제가 있었습니다.<br>
+해결 : fetch 함수로 비동기 처리 로직을 감싸 API 응답 후 데이터 렌더링을 보장하는것으로 해결하였습니다. <br>
 * 문제2<br>
+![26](https://github.com/user-attachments/assets/a460a842-04da-48ff-8a1f-1b7f7d8e9d2c)
+<br>
+미세먼지 센서 데이터가 잘 수집되다가 개발과정중 Redis에 반영되지 않는 오류가 생겼습니다.<br>
+해결 : 센서데이터 수집로직부터 Redis, Mysql로직까지 디버깅 출력문 삽입으로 단계별 원인을 추적해갔고, <br>
+FastAPI Swagger 문서를 통해 Foreign Key 참조 오류인것을 확인하고 오타를 수정함으로써 해결하였습니다.
 
-<br>
-<br>
-메인페이지에서 룸메이트 추천기능을 넣는게 쉽지않았는데요<br>
-해결 : stream함수와 filter함수를 공부하고 하드코딩으로 해결하였습니다.
+
+
+
+
