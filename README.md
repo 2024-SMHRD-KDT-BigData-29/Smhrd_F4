@@ -1,5 +1,5 @@
 # 📎 Worklean (팀명: 스인재F4)
-![image](https://github.com/user-attachments/assets/53020f39-9864-4ca8-af46-07fd684ad002)
+![image](https://github.com/user-attachments/assets/53020f39-9864-4ca8-af46-07fd684ad002) <br>
 ![KakaoTalk_20250611_161415660](https://github.com/user-attachments/assets/2287adb4-1513-4286-ac93-425f48b5168b)
 
 
@@ -98,17 +98,18 @@
 
 ## 🖥 화면 구성
 
-### 로그인/회원가입/엣지보드괸리
+### 로그인/회원가입
+![31](https://github.com/user-attachments/assets/7912ae07-d824-462f-bdcb-b6d42bc783f7)
 
 <br>
 
 ### 대시보드
+![32](https://github.com/user-attachments/assets/b1a42591-7fe7-4ea1-81a7-5216c736073d)
+![33](https://github.com/user-attachments/assets/ec8aa123-371b-4743-bb9c-3ada13f6e139)
+![34](https://github.com/user-attachments/assets/1aceae85-a1fa-4813-857d-28f8fb8f7de4)
 
 <br>
 
-### 메인화면/메시지/마이페이지/찜목록
-
-<br>
 
 ## 👨‍👩‍👦‍👦 팀원 역할
 <table>
@@ -131,6 +132,7 @@
     <td align="center"><b>Frontend-sub, 산출문서</b></td>
     <td align="center"><b>Frontend</b></td>
   </tr>
+  <br>
 </table><br>
 안종현 : 저는 이번프로젝트에서 PM으로 전체 일정 및 산출관리와 AI모델, Backend-sub를 담당했습니다. <br>
 장우주 : 저는 이번프로젝트에서 FastAPI구축과 라즈베리파이, Mysql과 Redis를 담당했습니다. <br>
