@@ -31,30 +31,29 @@
     <tr>
         <td>사용언어</td>
         <td>
-            <img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white"/>
-            <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=HTML5&logoColor=white"/>
+            <img src="https://img.shields.io/badge/PyCharm-000000?style=flat-square&logo=PyCharm&logoColor=white"/>
             <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=CSS3&logoColor=white"/>
-            <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=JavaScript&logoColor=white"/>
         </td>
     </tr>
     <tr>
         <td>라이브러리</td>
         <td>
             <img src="https://img.shields.io/badge/BootStrap-7952B3?style=for-the-badge&logo=BootStrap&logoColor=white"/>
-            <img src="https://img.shields.io/badge/KakaoMap-FFCD00?style=for-the-badge&logo=Kakao&logoColor=white"/>
+            <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=React&logoColor=black"/>
         </td>
     </tr>
     <tr>
         <td>개발도구</td>
         <td>
-            <img src="https://img.shields.io/badge/Eclipse-2C2255?style=for-the-badge&logo=Eclipse&logoColor=white"/>
-            <img src="https://img.shields.io/badge/VSCode-007ACC?style=for-the-badge&logo=VisualStudioCode&logoColor=white"/>
+            <img src="https://img.shields.io/badge/PyCharm-000000?style=flat-square&logo=PyCharm&logoColor=white"
+            <img src="https://img.shields.io/badge/Visual Studio Code-007ACC?style=flat-square&logo=Visual Studio Code&logoColor=white"/>
         </td>
     </tr>
     <tr>
         <td>서버환경</td>
         <td>
-            <img src="https://img.shields.io/badge/Apache Tomcat 9.0-D22128?style=for-the-badge&logo=Apache Tomcat&logoColor=white"/>
+            <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi"/>
+            <img src="https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=Node.js&logoColor=white"/>
         </td>
     </tr>
     <tr>
@@ -76,7 +75,8 @@
 <br>
 
 ## ⚙ 시스템 아키텍처
-![Worklean_최종발표](https://github.com/user-attachments/assets/30b46a30-cba8-4d41-8992-226405ed48cc)
+![11](https://github.com/user-attachments/assets/5fa83083-f2e8-4f61-8fe7-1f55da86eb17)
+
 <br>
 
 ## 📌 SW유스케이스
@@ -85,11 +85,13 @@
 <br>
 
 ## 📌 서비스 흐름도
-![KakaoTalk_20250528_113843607](https://github.com/user-attachments/assets/42cf99b2-ffee-48fc-a034-63d074fdfdaa)
+![7](https://github.com/user-attachments/assets/04ea4a4b-be52-4a96-a1b2-1643d9b4f5b5)
+
 <br>
 
-## 📌 ER다이어그램
-![Worklean_최종발표 (1)](https://github.com/user-attachments/assets/bf30cf8d-7a8a-47a2-80f5-c7e122eaae6c)
+## 📌 ER다이어그램 (Not latest)
+![Worklean_최종발표 (1)](https://github.com/user-attachments/assets/9557a0eb-05b2-4a16-a3e4-7df41563bd62)
+
 <br>
 
 ## 🖥 화면 구성
@@ -128,10 +130,10 @@
     <td align="center"><b>Frontend</b></td>
   </tr>
 </table><br>
-안종현 : 저는 이번프로젝트에서 PM으로 전체 일정 및 산출관리와 AI모델, Backend-sub를 담당했습니다.
-장우주 : 저는 이번프로젝트에서 FastAPI구축과 라즈베리파이, Mysql과 Redis를 담당했습니다.
-이선홍 : 저는 이번프로젝트에서 UI/UX설계와 Frontend-sub를 담당했습니다.
-이겨라 : 저는 이번프로젝트에서 React 대시보드 구현과 공기질 상태 시각화와 FastAPI연동을 담당했습니다.
+안종현 : 저는 이번프로젝트에서 PM으로 전체 일정 및 산출관리와 AI모델, Backend-sub를 담당했습니다. <br>
+장우주 : 저는 이번프로젝트에서 FastAPI구축과 라즈베리파이, Mysql과 Redis를 담당했습니다. <br>
+이선홍 : 저는 이번프로젝트에서 UI/UX설계와 Frontend-sub를 담당했습니다. <br>
+이겨라 : 저는 이번프로젝트에서 React 대시보드 구현과 공기질 상태 시각화와 FastAPI연동을 담당했습니다. <br>
 
 ## 🤾‍♂️ 트러블슈팅
 
