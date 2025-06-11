@@ -6,7 +6,7 @@
 
 ## 👀 서비스 소개
 * 서비스명:  Work(일)와 Clean(청결)을 결합한 Worklean
-* 서비스설명: 실시간 공기질 모니터링에 AI모델을 활용하여 이상치를 탐지했을시 HVAC장비가 자동으로 공기질을 제어하는 시스템입니다.
+* 서비스설명: AI 기반 이상치 탐지 모델을 적용한 실시간 공기질 모니터링 시스템으로, 이상이 감지되면 HVAC(공조) 장비를 자동 제어합니다.
 <br>
 
 ## 📅 프로젝트 기간
@@ -14,11 +14,12 @@
 <br>
 
 ## ⭐ 주요 기능
-* 처음 로그인한 회원은 매칭에 필요한 DB정보 입력페이지로 이동 기능
-* 게시글 CRUD 및 찜하기 기능
-* 게시글 댓글기능 및 카카오맵API 위치정보 표시 기능
-* DB기반 추천유저 매칭기능
-* 유저간의 메시지 기능
+* 
+* 
+* 
+* 
+* 
+* 
 <br>
 
 ## ⛏ 기술스택
@@ -75,72 +76,73 @@
 <br>
 
 ## ⚙ 시스템 아키텍처(구조) 예시 
-![image](https://github.com/user-attachments/assets/5bca170a-a9bb-4a3d-9aab-d6582e9f0606)
-
+![Worklean_최종발표](https://github.com/user-attachments/assets/30b46a30-cba8-4d41-8992-226405ed48cc)
 <br>
 
 ## 📌 SW유스케이스
-![image](https://github.com/user-attachments/assets/c51fe61f-556a-4d92-9644-db3ca3a162f4)
+![image](https://github.com/user-attachments/assets/ba3a89d7-ade4-4da4-85a7-96d7d2de0c0f)
+
 <br>
 
 ## 📌 서비스 흐름도
-![image](https://github.com/user-attachments/assets/6eacbfdc-3bb5-40b0-ba9b-3c62fc2d4e96)
+![KakaoTalk_20250528_113843607](https://github.com/user-attachments/assets/42cf99b2-ffee-48fc-a034-63d074fdfdaa)
 <br>
 
 ## 📌 ER다이어그램
-![image](https://github.com/user-attachments/assets/174cb663-df40-4765-8eef-8200e2a1c51c)
+![Worklean_최종발표 (1)](https://github.com/user-attachments/assets/bf30cf8d-7a8a-47a2-80f5-c7e122eaae6c)
 <br>
 
 ## 🖥 화면 구성
 
-### 로그인/회원가입/회원괸리/회원수정
-![제목을 입력하세요](https://github.com/user-attachments/assets/7d10d400-8e52-4807-90ae-7975eb764732)
+### 로그인/회원가입/엣지보드괸리
+
 <br>
 
-### 게시글
-![제목을 입력하세요 (1)](https://github.com/user-attachments/assets/55dd0681-1af8-4079-bce3-31145109fc1d)
+### 대시보드
+
 <br>
 
 ### 메인화면/메시지/마이페이지/찜목록
-![제목을 입력하세요 (2)](https://github.com/user-attachments/assets/12177429-e295-4a62-ab9e-5794668f3fdf)
+
 <br>
 
 ## 👨‍👩‍👦‍👦 팀원 역할
 <table>
   <tr>
     <td align="center"><img src="https://github.com/user-attachments/assets/0a2025cb-111c-458e-a33b-505afa6e7052" height="100"/></td>
-    <td align="center"><img src="https://mb.ntdtv.kr/assets/uploads/2019/01/Screen-Shot-2019-01-08-at-4.31.55-PM-e1546932545978.png" width="100" height="100"/></td>
-    <td align="center"><img src="https://mblogthumb-phinf.pstatic.net/20160127_177/krazymouse_1453865104404DjQIi_PNG/%C4%AB%C4%AB%BF%C0%C7%C1%B7%BB%C1%EE_%B6%F3%C0%CC%BE%F0.png?type=w2" width="100" height="100"/></td>
-    <td align="center"><img src="https://i.pinimg.com/236x/ed/bb/53/edbb53d4f6dd710431c1140551404af9.jpg" width="100" height="100"/></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/19408550-788e-40f8-b2db-e58cf26e6d45" width="100" height="100"/></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/32159e0c-0d85-4ed0-9218-e418f5f5a1f2" width="100" height="100"/></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/86566b46-f22d-4001-857a-f4d79e9ff3b9" width="100" height="100"/></td>
+    
   </tr>
   <tr>
+    <td align="center"><strong>안종현</strong></td>
     <td align="center"><strong>장우주</strong></td>
-    <td align="center"><strong>조성규</strong></td>
-    <td align="center"><strong>김유진</strong></td>
     <td align="center"><strong>이선홍</strong></td>
+    <td align="center"><strong>이겨라</strong></td>
   </tr>
   <tr>
-    <td align="center"><b>PM, Backend</b></td>
-    <td align="center"><b>Backend, DB</b></td>
-    <td align="center"><b>Frontend, 산출문서</b></td>
-    <td align="center"><b>Frontend, Figma</b></td>
+    <td align="center"><b>PM, Backend-sub</b></td>
+    <td align="center"><b>Backend, IoT, DB</b></td>
+    <td align="center"><b>Frontend-sub, 산출문서</b></td>
+    <td align="center"><b>Frontend</b></td>
   </tr>
 </table><br>
-장우주 : 이번 프로젝트 팀장으로서 WBS로 일정관리와 업무조율 및 Backend 메인을 담당하게 되었습니다.
-조성규 : 이번 프로젝트에서 Backend Sub 및 DB를 담당했습니다.
-조유진 : 이번 프로젝트에서 Main FrontEnd와 산출문서를 담당했습니다.
-이선홍 : 이번 프로젝트에서 Figma와 FrontEnd Sub를 담당했습니다.
+안종현 : 저는 이번프로젝트에서 PM으로 전체 일정 및 산출관리와 AI모델, Backend-sub를 담당했습니다.
+장우주 : 저는 이번프로젝트에서 FastAPI구축과 라즈베리파이, Mysql과 Redis를 담당했습니다.
+이선홍 : 저는 이번프로젝트에서 UI/UX설계와 Frontend-sub를 담당했습니다.
+이겨라 : 저는 이번프로젝트에서 React 대시보드 구현과 공기질 상태 시각화와 FastAPI연동을 담당했습니다.
 
 ## 🤾‍♂️ 트러블슈팅
 
   
 * 문제1<br>
-![image](https://github.com/user-attachments/assets/f04bcbec-5e2b-4ec1-b094-df0a21154093)
+
 <br>
 html에서 작성한 코드가 브라우저에 반영이 안되어있는 모습인데요<br>
 해결 : 기존에 남아 있던 브라우저의 캐시를 지우고 프로젝트를 Clean 진행 후 해결되었습니다. <br>
 * 문제2<br>
-![image](https://github.com/user-attachments/assets/05f55704-bd18-42f6-a6f3-a7eaea765bb1)
+
 <br>
 <br>
 메인페이지에서 룸메이트 추천기능을 넣는게 쉽지않았는데요<br>
