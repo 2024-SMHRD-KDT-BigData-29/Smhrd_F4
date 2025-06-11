@@ -75,7 +75,7 @@
 
 <br>
 
-## ⚙ 시스템 아키텍처(구조) 예시 
+## ⚙ 시스템 아키텍처
 ![Worklean_최종발표](https://github.com/user-attachments/assets/30b46a30-cba8-4d41-8992-226405ed48cc)
 <br>
 
