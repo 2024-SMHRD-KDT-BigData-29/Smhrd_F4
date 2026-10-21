@@ -1,5 +1,8 @@
 # 📎 Worklean (팀명: 스인재F4)
 ![image](https://github.com/user-attachments/assets/53020f39-9864-4ca8-af46-07fd684ad002) <br>
+
+https://github.com/user-attachments/assets/9e09c048-0490-4846-b92a-ed55a744f087
+
 ![KakaoTalk_20250611_161415660](https://github.com/user-attachments/assets/2287adb4-1513-4286-ac93-425f48b5168b)
 
 
